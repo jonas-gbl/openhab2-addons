@@ -20,12 +20,10 @@ import org.eclipse.smarthome.core.thing.ThingTypeUID;
 @NonNullByDefault
 public class VerisureBindingConstants {
 
-
-    // List of all Channel ids
-    public static final String ARM_DISARM_CHANNEL = "arm-disarm-channel";
-    public static final String ALARM_STATUS_CHANNEL = "alarm-status-channel";
-    private static final String BINDING_ID = "verisure";
+    public static final String BINDING_ID = "verisure";
     // List of all Thing Type UIDs
     public static final ThingTypeUID THING_TYPE_VERISURE_ALARM = new ThingTypeUID(BINDING_ID, "verisure-alarm");
 
+    // List of all Channel ids
+    public static final String ALARM_STATUS_CHANNEL = "alarm-status-channel";
 }

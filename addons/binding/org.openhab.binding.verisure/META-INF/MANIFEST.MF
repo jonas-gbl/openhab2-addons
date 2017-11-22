@@ -22,5 +22,7 @@ Import-Package:
  org.eclipse.smarthome.core.thing.type,
  org.eclipse.smarthome.core.types,
  org.osgi.service.component.annotations;resolution:=optional,
- org.slf4j
+ org.slf4j,
+ org.eclipse.jetty.util,
+ com.google.gson
 Service-Component: OSGI-INF/*.xml

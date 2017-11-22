@@ -8,14 +8,22 @@
  */
 package org.openhab.binding.verisure.handler;
 
-import static org.openhab.binding.verisure.VerisureBindingConstants.*;
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
-import org.eclipse.jdt.annotation.NonNullByDefault;
+import static org.openhab.binding.verisure.VerisureBindingConstants.ALARM_STATUS_CHANNEL;
+
+import org.eclipse.smarthome.config.core.Configuration;
+import org.eclipse.smarthome.core.library.types.StringType;
 import org.eclipse.smarthome.core.thing.ChannelUID;
 import org.eclipse.smarthome.core.thing.Thing;
 import org.eclipse.smarthome.core.thing.ThingStatus;
+import org.eclipse.smarthome.core.thing.ThingStatusDetail;
 import org.eclipse.smarthome.core.thing.binding.BaseThingHandler;
 import org.eclipse.smarthome.core.types.Command;
+import org.openhab.binding.verisure.internal.VerisureSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,18 +33,50 @@ import org.slf4j.LoggerFactory;
  *
  * @author Jonas Gabriel - Initial contribution
  */
- @NonNullByDefault
 public class VerisureHandler extends BaseThingHandler {
 
+
+    private static final String GIID_PARAM = "giid";
+    private static final String USERNAME_PARAM = "username";
+    private static final String PASSWORD_PARAM = "password";
+    private static final String REFRESH_PARAM = "refresh";
+
     private final Logger logger = LoggerFactory.getLogger(VerisureHandler.class);
+
+    private String giid;
+
+    private BigDecimal refresh;
+
+    private VerisureSession verisureSession;
+
+    private ScheduledFuture<?> refreshJob;
 
     public VerisureHandler(Thing thing) {
         super(thing);
     }
 
     @Override
+    public void initialize() {
+        logger.debug("Initializing Verisure handler.");
+
+        Configuration config = getThing().getConfiguration();
+
+        giid = (String) config.get(GIID_PARAM);
+        String username = (String) config.get(USERNAME_PARAM);
+        String password = (String) config.get(PASSWORD_PARAM);
+        refresh = (BigDecimal) config.get(REFRESH_PARAM);
+        verisureSession = new VerisureSession(username, password);
+
+        ChannelUID channelUID = new ChannelUID(getThing().getUID(), ALARM_STATUS_CHANNEL);
+        StringType state = new StringType(VerisureSession.ArmState.ARMED_AWAY.id);
+        updateState(channelUID, state);
+
+        startAutomaticRefresh();
+    }
+
+    @Override
     public void handleCommand(ChannelUID channelUID, Command command) {
-        if (channelUID.getId().equals(ARM_DISARM_CHANNEL)) {
+        if (channelUID.getId().equals(ALARM_STATUS_CHANNEL)) {
             // TODO: handle command
 
             // Note: if communication with thing fails for some reason,
@@ -46,17 +86,34 @@ public class VerisureHandler extends BaseThingHandler {
         }
     }
 
-    @Override
-    public void initialize() {
-        // TODO: Initialize the thing. If done set status to ONLINE to indicate proper working.
-        // Long running initialization should be done asynchronously in background.
-        updateStatus(ThingStatus.ONLINE);
+    private void startAutomaticRefresh() {
+        refreshJob = scheduler.scheduleWithFixedDelay(this::updateAlarmArmState, 0, refresh.intValue(), TimeUnit.SECONDS);
+    }
 
-        // Note: When initialization can NOT be done set the status with more details for further
-        // analysis. See also class ThingStatusDetail for all available status details.
-        // Add a description to give user information to understand why thing does not work
-        // as expected. E.g.
-        // updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR,
-        // "Can not access device as username and/or password are invalid");
+    private void updateAlarmArmState() {
+
+        try {
+            if (verisureSession.login()) {
+                VerisureSession.ArmState data = verisureSession.getArmState(giid);
+                updateStatus(ThingStatus.ONLINE);
+                ChannelUID channelUID = new ChannelUID(getThing().getUID(), ALARM_STATUS_CHANNEL);
+                StringType state = new StringType(data.id);
+                updateState(channelUID, state);
+            }
+        } catch (IOException e) {
+            logger.debug("Exception occurred during execution: {}", e.getMessage(), e);
+            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.OFFLINE.COMMUNICATION_ERROR, e.getMessage());
+        }
+
+    }
+
+    @Override
+    public void dispose() {
+        refreshJob.cancel(true);
+        try {
+            verisureSession.logout();
+        } catch (IOException e) {
+            logger.debug("Failed to logout", e);
+        }
     }
 }
