@@ -18,45 +18,48 @@ import java.net.URL;
  * @author Jonas Gabriel - Initial contribution
  */
 public class VerisureUrls {
-    private static final String[] BASE_URLS = {"https://e-api02.verisure.com/xbn/2", "https://e-api01.verisure.com/xbn/2"};
+    private final String baseUrl;
 
+    public VerisureUrls(String baseUrl) {
+        this.baseUrl = baseUrl;
+    }
 
-    public static URL login() {
+    public URL login() {
         try {
-            return new URL(BASE_URLS[0] + "/cookie");
+            return new URL(baseUrl + "/cookie");
         } catch (MalformedURLException e) {
             throw new IllegalStateException("login URL is misconfigured");
         }
     }
 
-    public static URL installations(String username) {
+    public URL installations(String username) {
         try {
-            return new URL(BASE_URLS[0] + "/installation/search?email=" + username);
+            return new URL(baseUrl + "/installation/search?email=" + username);
         } catch (MalformedURLException e) {
             throw new IllegalStateException("installations URL is misconfigured");
         }
 
     }
 
-    public static URL installation(String guid) {
+    public URL installation(String guid) {
         try {
-            return new URL(BASE_URLS[0] + "/installation/" + guid + "/");
+            return new URL(baseUrl + "/installation/" + guid + "/");
         } catch (MalformedURLException e) {
             throw new IllegalStateException("installation URL is misconfigured");
         }
     }
 
-    public static URL armStateCode(String guid) {
+    public URL armStateCode(String guid) {
         try {
-            return new URL(BASE_URLS[0] + "/installation/" + guid + "/" + "armstate/code");
+            return new URL(baseUrl + "/installation/" + guid + "/" + "armstate/code");
         } catch (MalformedURLException e) {
             throw new IllegalStateException("armStateCode URL is misconfigured");
         }
     }
 
-    public static URL armState(String guid) {
+    public URL armState(String guid) {
         try {
-            return new URL(BASE_URLS[0] + "/installation/" + guid + "/" + "armstate");
+            return new URL(baseUrl + "/installation/" + guid + "/" + "armstate");
         } catch (MalformedURLException e) {
             throw new IllegalStateException("armState URL is misconfigured");
         }

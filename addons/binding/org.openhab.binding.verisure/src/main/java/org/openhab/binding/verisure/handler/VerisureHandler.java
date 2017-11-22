@@ -23,7 +23,9 @@ import org.eclipse.smarthome.core.thing.ThingStatus;
 import org.eclipse.smarthome.core.thing.ThingStatusDetail;
 import org.eclipse.smarthome.core.thing.binding.BaseThingHandler;
 import org.eclipse.smarthome.core.types.Command;
+import org.openhab.binding.verisure.VerisureBindingConstants;
 import org.openhab.binding.verisure.internal.VerisureSession;
+import org.openhab.binding.verisure.internal.VerisureUrls;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,11 +37,6 @@ import org.slf4j.LoggerFactory;
  */
 public class VerisureHandler extends BaseThingHandler {
 
-
-    private static final String GIID_PARAM = "giid";
-    private static final String USERNAME_PARAM = "username";
-    private static final String PASSWORD_PARAM = "password";
-    private static final String REFRESH_PARAM = "refresh";
 
     private final Logger logger = LoggerFactory.getLogger(VerisureHandler.class);
 
@@ -61,11 +58,15 @@ public class VerisureHandler extends BaseThingHandler {
 
         Configuration config = getThing().getConfiguration();
 
-        giid = (String) config.get(GIID_PARAM);
-        String username = (String) config.get(USERNAME_PARAM);
-        String password = (String) config.get(PASSWORD_PARAM);
-        refresh = (BigDecimal) config.get(REFRESH_PARAM);
-        verisureSession = new VerisureSession(username, password);
+        giid = (String) config.get(VerisureBindingConstants.GIID_PARAM);
+        String username = (String) config.get(VerisureBindingConstants.USERNAME_PARAM);
+        String password = (String) config.get(VerisureBindingConstants.PASSWORD_PARAM);
+        refresh = (BigDecimal) config.get(VerisureBindingConstants.REFRESH_PARAM);
+
+        String baseUrl = (String) config.get(VerisureBindingConstants.BASEURL_PARAM);
+        VerisureUrls verisureUrls = new VerisureUrls(baseUrl);
+
+        verisureSession = new VerisureSession(verisureUrls, username, password);
 
         ChannelUID channelUID = new ChannelUID(getThing().getUID(), ALARM_STATUS_CHANNEL);
         StringType state = new StringType(VerisureSession.ArmState.ARMED_AWAY.id);

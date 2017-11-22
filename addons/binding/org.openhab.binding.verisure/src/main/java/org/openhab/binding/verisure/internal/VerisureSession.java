@@ -33,19 +33,18 @@ public class VerisureSession {
 
     private static final String EMPTY = "";
     private final Logger logger = LoggerFactory.getLogger(VerisureSession.class);
-
     private final String username;
     private final String password;
+    private final VerisureUrls verisureUrls;
     private List<String> installations;
     private String vid;
 
-    public VerisureSession(String username, String password) {
+    public VerisureSession(VerisureUrls verisureUrls, String username, String password) {
+        this.verisureUrls = verisureUrls;
         this.username = username;
         this.password = password;
         this.vid = EMPTY;
         this.installations = new ArrayList<>();
-
-
     }
 
     public boolean login() throws IOException {
@@ -57,7 +56,7 @@ public class VerisureSession {
             headers.put("Accept", "application/json");
 
 
-            HttpResponse response = HttpUtils.post(VerisureUrls.login(), headers, null);
+            HttpResponse response = HttpUtils.post(verisureUrls.login(), headers, null);
             if (response.getStatus() == 200) {
                 JsonParser parser = new JsonParser();
                 JsonObject jsonObject = parser.parse(response.getBody()).getAsJsonObject();
@@ -78,7 +77,7 @@ public class VerisureSession {
             headers.put("Cookie", "vid=" + this.vid);
             headers.put("Accept", "application/json,text/javascript, */*; q=0.01");
 
-            HttpResponse response = HttpUtils.delete(VerisureUrls.login(), headers);
+            HttpResponse response = HttpUtils.delete(verisureUrls.login(), headers);
             if (response.getStatus() == 200) {
                 this.vid = EMPTY;
             }
@@ -92,7 +91,7 @@ public class VerisureSession {
 
         ArmState result;
 
-        HttpResponse response = HttpUtils.get(VerisureUrls.armState(giid), headers);
+        HttpResponse response = HttpUtils.get(verisureUrls.armState(giid), headers);
         if (response.getStatus() == 200) {
             String responseBody = response.getBody();
 
@@ -114,7 +113,7 @@ public class VerisureSession {
         headers.put("Cookie", "vid=" + this.vid);
         headers.put("Accept", "application/json,text/javascript, */*; q=0.01");
         try {
-            HttpResponse response = HttpUtils.get(VerisureUrls.installations(this.username), headers);
+            HttpResponse response = HttpUtils.get(verisureUrls.installations(this.username), headers);
             if (response.getStatus() == 200) {
                 JsonParser parser = new JsonParser();
                 String responseBody = response.getBody();

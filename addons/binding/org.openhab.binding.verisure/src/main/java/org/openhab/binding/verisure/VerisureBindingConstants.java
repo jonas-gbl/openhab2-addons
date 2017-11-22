@@ -26,4 +26,11 @@ public class VerisureBindingConstants {
 
     // List of all Channel ids
     public static final String ALARM_STATUS_CHANNEL = "alarm-status-channel";
+
+    // Configuration Parameters;
+    public static final String GIID_PARAM = "giid";
+    public static final String USERNAME_PARAM = "username";
+    public static final String PASSWORD_PARAM = "password";
+    public static final String REFRESH_PARAM = "refresh";
+    public static final String BASEURL_PARAM = "baseurl";
 }
