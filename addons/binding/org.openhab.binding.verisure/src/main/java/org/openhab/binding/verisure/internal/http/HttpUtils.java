@@ -12,6 +12,7 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Map;
+
 /**
  * The {@link HttpUtils} is responsible for creating things and thing
  * handlers.
@@ -86,7 +87,7 @@ public class HttpUtils {
     private static HttpResponse retrieveResponse(HttpURLConnection connection) throws IOException {
         String result;
         int statusCode = connection.getResponseCode();
-        if (statusCode != HttpURLConnection.HTTP_OK) {
+        if (statusCode >= HttpURLConnection.HTTP_BAD_REQUEST) {
             InputStream error = connection.getErrorStream();
             result = getInputStreamAsString(error);
         } else {

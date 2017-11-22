@@ -46,7 +46,7 @@ public class VerisureHandler extends BaseThingHandler {
 
     private VerisureSession verisureSession;
 
-    private ScheduledFuture<?> refreshJob;
+    private ScheduledFuture<?> refreshJob, loginJob;
 
     public VerisureHandler(Thing thing) {
         super(thing);
@@ -89,12 +89,13 @@ public class VerisureHandler extends BaseThingHandler {
 
     private void startAutomaticRefresh() {
         refreshJob = scheduler.scheduleWithFixedDelay(this::updateAlarmArmState, 0, refresh.intValue(), TimeUnit.SECONDS);
+        loginJob = scheduler.scheduleWithFixedDelay(this::updateVerisureCookie, 1, 12, TimeUnit.HOURS);
     }
 
-    private void updateAlarmArmState() {
+    private synchronized void updateAlarmArmState() {
 
         try {
-            if (verisureSession.login()) {
+            if (verisureSession.isLoggedIn() || verisureSession.login()) {
                 VerisureSession.ArmState data = verisureSession.getArmState(giid);
                 updateStatus(ThingStatus.ONLINE);
                 ChannelUID channelUID = new ChannelUID(getThing().getUID(), ALARM_STATUS_CHANNEL);
@@ -108,9 +109,19 @@ public class VerisureHandler extends BaseThingHandler {
 
     }
 
+    private synchronized void updateVerisureCookie() {
+        try {
+            verisureSession.login();
+        } catch (IOException e) {
+            logger.debug("Exception occurred during execution: {}", e.getMessage(), e);
+            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.OFFLINE.COMMUNICATION_ERROR, e.getMessage());
+        }
+    }
+
     @Override
     public void dispose() {
         refreshJob.cancel(true);
+        loginJob.cancel(true);
         try {
             verisureSession.logout();
         } catch (IOException e) {

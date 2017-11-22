@@ -36,7 +36,6 @@ public class VerisureSession {
     private final String username;
     private final String password;
     private final VerisureUrls verisureUrls;
-    private List<String> installations;
     private String vid;
 
     public VerisureSession(VerisureUrls verisureUrls, String username, String password) {
@@ -44,26 +43,22 @@ public class VerisureSession {
         this.username = username;
         this.password = password;
         this.vid = EMPTY;
-        this.installations = new ArrayList<>();
     }
 
     public boolean login() throws IOException {
-
-        if (!isLoggedIn()) {
-            String basicAuthentication = "Basic " + B64Code.encode("CPE/" + username + ":" + password, "utf-8");
-            Map<String, String> headers = new HashMap<>();
-            headers.put("Authorization", basicAuthentication);
-            headers.put("Accept", "application/json");
+        String basicAuthentication = "Basic " + B64Code.encode("CPE/" + username + ":" + password, "utf-8");
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Authorization", basicAuthentication);
+        headers.put("Accept", "application/json,text/javascript, */*; q=0.01");
 
 
-            HttpResponse response = HttpUtils.post(verisureUrls.login(), headers, null);
-            if (response.getStatus() == 200) {
-                JsonParser parser = new JsonParser();
-                JsonObject jsonObject = parser.parse(response.getBody()).getAsJsonObject();
-                vid = jsonObject.get("cookie").getAsString();
-                populateInstallations();
-            }
+        HttpResponse response = HttpUtils.post(verisureUrls.login(), headers, null);
+        if (response.getStatus() == 200) {
+            JsonParser parser = new JsonParser();
+            JsonObject jsonObject = parser.parse(response.getBody()).getAsJsonObject();
+            vid = jsonObject.get("cookie").getAsString();
         }
+
         return isLoggedIn();
     }
 
@@ -71,17 +66,21 @@ public class VerisureSession {
         return !vid.isEmpty();
     }
 
-    public void logout() throws IOException {
-        if (isLoggedIn()) {
-            Map<String, String> headers = new HashMap<>();
-            headers.put("Cookie", "vid=" + this.vid);
-            headers.put("Accept", "application/json,text/javascript, */*; q=0.01");
+    public boolean logout() throws IOException {
 
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Cookie", "vid=" + this.vid);
+        headers.put("Accept", "application/json,text/javascript, */*; q=0.01");
+
+        boolean success;
+        try {
             HttpResponse response = HttpUtils.delete(verisureUrls.login(), headers);
-            if (response.getStatus() == 200) {
-                this.vid = EMPTY;
-            }
+            success = (response.getStatus() == 200);
+        } finally {
+            this.vid = EMPTY;
         }
+
+        return success;
     }
 
     public ArmState getArmState(String giid) throws IOException {
@@ -102,16 +101,18 @@ public class VerisureSession {
             JsonElement statusType = jsonObject.get("statusType");
             result = ArmState.retrieveById(statusType.getAsString());
         } else {
+            handleErrorResponse(response);
             throw new IOException("Could not retrieve arm state for guid [" + giid + "]");
         }
 
         return result;
     }
 
-    private void populateInstallations() {
+    private List<String> populateInstallations() {
         Map<String, String> headers = new HashMap<>();
         headers.put("Cookie", "vid=" + this.vid);
         headers.put("Accept", "application/json,text/javascript, */*; q=0.01");
+        List<String> installations = new ArrayList<>();
         try {
             HttpResponse response = HttpUtils.get(verisureUrls.installations(this.username), headers);
             if (response.getStatus() == 200) {
@@ -119,7 +120,6 @@ public class VerisureSession {
                 String responseBody = response.getBody();
                 JsonArray jArray = parser.parse(responseBody).getAsJsonArray();
 
-                installations.clear();
                 for (JsonElement obj : jArray) {
                     JsonElement giid = obj.getAsJsonObject().get("giid");
                     installations.add(giid.getAsString());
@@ -127,6 +127,19 @@ public class VerisureSession {
             }
         } catch (IOException e) {
             logger.error("Failed to populate installations", e);
+        }
+
+        return installations;
+    }
+
+    private void handleErrorResponse(HttpResponse response) {
+        int status = response.getStatus();
+        if (status == 401 || status == 403) {
+            try {
+                logout();
+            } catch (IOException e) {
+                logger.error("Failed to logout", e);
+            }
         }
     }
 
