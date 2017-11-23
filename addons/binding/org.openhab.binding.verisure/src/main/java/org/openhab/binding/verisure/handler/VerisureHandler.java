@@ -102,7 +102,6 @@ public class VerisureHandler extends BaseThingHandler {
                 updateState(channelUID, state);
             }
         } catch (IOException e) {
-            logger.debug("Exception occurred during execution: {}", e.getMessage(), e);
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.OFFLINE.COMMUNICATION_ERROR, e.getMessage());
         }
 
@@ -112,7 +111,6 @@ public class VerisureHandler extends BaseThingHandler {
         try {
             verisureSession.login();
         } catch (IOException e) {
-            logger.debug("Exception occurred during execution: {}", e.getMessage(), e);
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.OFFLINE.COMMUNICATION_ERROR, e.getMessage());
         }
     }
