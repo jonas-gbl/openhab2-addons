@@ -76,13 +76,9 @@ public class VerisureHandler extends BaseThingHandler {
 
     @Override
     public void handleCommand(ChannelUID channelUID, Command command) {
-        if (channelUID.getId().equals(ALARM_STATUS_CHANNEL)) {
-            // TODO: handle command
-
-            // Note: if communication with thing fails for some reason,
-            // indicate that by setting the status with detail information
-            // updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR,
-            // "Could not control device at IP address x.x.x.x");
+        if (channelUID.getId().equals(ALARM_STATUS_CHANNEL) && command instanceof StringType) {
+            StringType receivedCommand = (StringType) command;
+            logger.debug("Requested state is [{}]", receivedCommand.toString());
         }
     }
 

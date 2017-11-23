@@ -44,7 +44,7 @@
         <item-type>String</item-type>
         <label>Alarm Status</label>
         <description>The status of Verisure Alarm System</description>
-        <state readOnly="true">
+        <state readOnly="false">
             <options>
                 <option value="ARMED_AWAY">Armed (Away)</option>
                 <option value="ARMED_HOME">Armed (Home)</option>
