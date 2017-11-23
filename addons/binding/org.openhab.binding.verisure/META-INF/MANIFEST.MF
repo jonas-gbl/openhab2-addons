@@ -24,5 +24,6 @@ Import-Package:
  org.osgi.service.component.annotations;resolution:=optional,
  org.slf4j,
  org.eclipse.jetty.util,
- com.google.gson
+ com.google.gson,
+ com.google.common.base
 Service-Component: OSGI-INF/*.xml

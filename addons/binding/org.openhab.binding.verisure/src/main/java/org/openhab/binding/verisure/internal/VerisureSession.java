@@ -14,10 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.google.gson.*;
 import org.eclipse.jetty.util.B64Code;
 import org.openhab.binding.verisure.internal.http.HttpResponse;
 import org.openhab.binding.verisure.internal.http.HttpUtils;
@@ -54,9 +51,16 @@ public class VerisureSession {
 
         HttpResponse response = HttpUtils.post(verisureUrls.login(), headers, null);
         if (response.getStatus() == 200) {
-            JsonParser parser = new JsonParser();
-            JsonObject jsonObject = parser.parse(response.getBody()).getAsJsonObject();
-            vid = jsonObject.get("cookie").getAsString();
+            try {
+                JsonParser parser = new JsonParser();
+                JsonObject jsonObject = parser.parse(response.getBody()).getAsJsonObject();
+                JsonElement cookieElement = jsonObject.get("cookie");
+                vid = cookieElement.getAsString();
+            } catch (JsonSyntaxException | IllegalArgumentException | NullPointerException exception) {
+                logger.error("Could not find armState [{}]", exception.getMessage());
+                vid = EMPTY;
+                throw new IOException("Failed to get arm state", exception);
+            }
         }
 
         return isLoggedIn();
@@ -93,13 +97,15 @@ public class VerisureSession {
         HttpResponse response = HttpUtils.get(verisureUrls.armState(giid), headers);
         if (response.getStatus() == 200) {
             String responseBody = response.getBody();
-
-            JsonParser parser = new JsonParser();
-
-            JsonObject jsonObject = parser.parse(responseBody).getAsJsonObject();
-
-            JsonElement statusType = jsonObject.get("statusType");
-            result = ArmState.retrieveById(statusType.getAsString());
+            try {
+                JsonParser parser = new JsonParser();
+                JsonObject jsonObject = parser.parse(responseBody).getAsJsonObject();
+                JsonElement statusType = jsonObject.get("statusType");
+                result = ArmState.retrieveById(statusType.getAsString());
+            } catch (JsonSyntaxException | IllegalArgumentException | NullPointerException exception) {
+                logger.error("Could not find armState [{}]", exception.getMessage());
+                throw new IOException("Failed to get arm state", exception);
+            }
         } else {
             handleErrorResponse(response);
             throw new IOException("Could not retrieve arm state for guid [" + giid + "]");
@@ -108,26 +114,33 @@ public class VerisureSession {
         return result;
     }
 
-    private List<String> populateInstallations() {
+    public List<String> retrieveInstallations() throws IOException {
         Map<String, String> headers = new HashMap<>();
         headers.put("Cookie", "vid=" + this.vid);
         headers.put("Accept", "application/json,text/javascript, */*; q=0.01");
         List<String> installations = new ArrayList<>();
-        try {
-            HttpResponse response = HttpUtils.get(verisureUrls.installations(this.username), headers);
-            if (response.getStatus() == 200) {
-                JsonParser parser = new JsonParser();
-                String responseBody = response.getBody();
-                JsonArray jArray = parser.parse(responseBody).getAsJsonArray();
 
+        HttpResponse response = HttpUtils.get(verisureUrls.installations(this.username), headers);
+        if (response.getStatus() == 200) {
+            String responseBody = response.getBody();
+            try {
+                JsonParser parser = new JsonParser();
+                JsonArray jArray = parser.parse(responseBody).getAsJsonArray();
                 for (JsonElement obj : jArray) {
                     JsonElement giid = obj.getAsJsonObject().get("giid");
                     installations.add(giid.getAsString());
                 }
+            } catch (JsonSyntaxException | NullPointerException exception) {
+                logger.error("Could not find armState [{}]", exception.getMessage());
+                throw new IOException("Response could not be parsed [" + responseBody + "]");
             }
-        } catch (IOException e) {
-            logger.error("Failed to populate installations", e);
+
+
+        } else {
+            handleErrorResponse(response);
+            throw new IOException("Could not retrieve installations for user [" + username + "]");
         }
+
 
         return installations;
     }
@@ -138,7 +151,7 @@ public class VerisureSession {
             try {
                 logout();
             } catch (IOException e) {
-                logger.error("Failed to logout", e);
+                logger.error("Failed to logout on remote server", e);
             }
         }
     }

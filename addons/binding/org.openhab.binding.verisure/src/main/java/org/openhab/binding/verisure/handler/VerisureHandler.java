@@ -64,15 +64,14 @@ public class VerisureHandler extends BaseThingHandler {
         refresh = (BigDecimal) config.get(VerisureBindingConstants.REFRESH_PARAM);
 
         String baseUrl = (String) config.get(VerisureBindingConstants.BASEURL_PARAM);
-        VerisureUrls verisureUrls = new VerisureUrls(baseUrl);
+        VerisureUrls verisureUrls = VerisureUrls.withBaseUrl(baseUrl);
 
-        verisureSession = new VerisureSession(verisureUrls, username, password);
-
-        ChannelUID channelUID = new ChannelUID(getThing().getUID(), ALARM_STATUS_CHANNEL);
-        StringType state = new StringType(VerisureSession.ArmState.ARMED_AWAY.id);
-        updateState(channelUID, state);
-
-        startAutomaticRefresh();
+        try {
+            verisureSession = new VerisureSession(verisureUrls, username, password);
+            startAutomaticRefresh();
+        } catch (IllegalArgumentException ilae) {
+            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.OFFLINE.CONFIGURATION_ERROR, ilae.getMessage());
+        }
     }
 
     @Override

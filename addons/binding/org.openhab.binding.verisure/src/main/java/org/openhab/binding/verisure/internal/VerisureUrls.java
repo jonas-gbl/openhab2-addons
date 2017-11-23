@@ -11,6 +11,8 @@ package org.openhab.binding.verisure.internal;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import com.google.common.base.Preconditions;
+
 /**
  * The {@link VerisureUrls} is responsible for handling commands, which are
  * sent to one of the channels.
@@ -18,15 +20,22 @@ import java.net.URL;
  * @author Jonas Gabriel - Initial contribution
  */
 public class VerisureUrls {
-    private final String baseUrl;
+    private final String protocol;
+    private final String host;
+    private final int port;
+    private final String basePath;
 
-    public VerisureUrls(String baseUrl) {
-        this.baseUrl = baseUrl;
+
+    public static VerisureUrls withBaseUrl(String baseUrl) {
+        Builder builder = new Builder();
+        builder.withBaseUrl(baseUrl);
+        return builder.build();
     }
 
     public URL login() {
         try {
-            return new URL(baseUrl + "/cookie");
+            String path = basePath + "/cookie";
+            return new URL(protocol, host, port, path);
         } catch (MalformedURLException e) {
             throw new IllegalStateException("login URL is misconfigured");
         }
@@ -34,7 +43,8 @@ public class VerisureUrls {
 
     public URL installations(String username) {
         try {
-            return new URL(baseUrl + "/installation/search?email=" + username);
+            String path = basePath + "/installation/search?email=" + username;
+            return new URL(protocol, host, port, path);
         } catch (MalformedURLException e) {
             throw new IllegalStateException("installations URL is misconfigured");
         }
@@ -43,7 +53,8 @@ public class VerisureUrls {
 
     public URL installation(String guid) {
         try {
-            return new URL(baseUrl + "/installation/" + guid + "/");
+            String path = basePath + "/installation/" + guid + "/";
+            return new URL(protocol, host, port, path);
         } catch (MalformedURLException e) {
             throw new IllegalStateException("installation URL is misconfigured");
         }
@@ -51,7 +62,8 @@ public class VerisureUrls {
 
     public URL armStateCode(String guid) {
         try {
-            return new URL(baseUrl + "/installation/" + guid + "/" + "armstate/code");
+            String path = basePath + "/installation/" + guid + "/" + "armstate/code";
+            return new URL(protocol, host, port, path);
         } catch (MalformedURLException e) {
             throw new IllegalStateException("armStateCode URL is misconfigured");
         }
@@ -59,9 +71,51 @@ public class VerisureUrls {
 
     public URL armState(String guid) {
         try {
-            return new URL(baseUrl + "/installation/" + guid + "/" + "armstate");
+            String path = basePath + "/installation/" + guid + "/" + "armstate";
+            return new URL(protocol, host, port, path);
         } catch (MalformedURLException e) {
             throw new IllegalStateException("armState URL is misconfigured");
+        }
+    }
+
+    private VerisureUrls(Builder builder) {
+        protocol = builder.protocol;
+        host = builder.host;
+        port = builder.port;
+        basePath = builder.basePath;
+    }
+
+    public static final class Builder {
+        private String protocol;
+        private String host;
+        private int port;
+        private String basePath;
+
+        public Builder withBaseUrl(String baseUrl) {
+            try {
+                URL endpoint = new URL(baseUrl);
+                Preconditions.checkArgument(endpoint.getQuery() == null, "Base Url should not contain query parameters");
+                Preconditions.checkArgument(endpoint.getRef() == null, "Base Url should not contain refs");
+                protocol = endpoint.getProtocol();
+                port = endpoint.getPort();
+
+                host = endpoint.getHost();
+                basePath = endpoint.getPath();
+            } catch (MalformedURLException e) {
+                throw new IllegalArgumentException("Base Url [" + baseUrl + "] is invalid");
+            }
+            return this;
+        }
+
+        public VerisureUrls build() {
+
+            if (basePath.length() > 0 && basePath.charAt(basePath.length() - 1) == '/') {
+                basePath = basePath.substring(0, basePath.length() - 1);
+            }
+            return new VerisureUrls(this);
+        }
+
+        private Builder() {
         }
     }
 }
