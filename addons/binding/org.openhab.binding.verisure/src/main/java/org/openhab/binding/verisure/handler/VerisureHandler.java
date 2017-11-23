@@ -41,7 +41,8 @@ public class VerisureHandler extends BaseThingHandler {
     private final Logger logger = LoggerFactory.getLogger(VerisureHandler.class);
 
     private String giid;
-
+    private String pin;
+    private boolean allowStateUpdate = false;
     private BigDecimal refresh;
 
     private VerisureSession verisureSession;
@@ -63,6 +64,9 @@ public class VerisureHandler extends BaseThingHandler {
         String password = (String) config.get(VerisureBindingConstants.PASSWORD_PARAM);
         refresh = (BigDecimal) config.get(VerisureBindingConstants.REFRESH_PARAM);
 
+        pin = (String) config.get(VerisureBindingConstants.PIN_PARAM);
+        allowStateUpdate = (pin != null && !pin.isEmpty());
+
         String baseUrl = (String) config.get(VerisureBindingConstants.BASEURL_PARAM);
         VerisureUrls verisureUrls = VerisureUrls.withBaseUrl(baseUrl);
 
@@ -78,9 +82,16 @@ public class VerisureHandler extends BaseThingHandler {
     public void handleCommand(ChannelUID channelUID, Command command) {
         if (channelUID.getId().equals(ALARM_STATUS_CHANNEL) && command instanceof StringType) {
             StringType receivedCommand = (StringType) command;
-            logger.debug("Requested state is [{}]", receivedCommand.toString());
+            if (allowStateUpdate) {
+                logger.debug("Requested state is [{}]", receivedCommand);
+                VerisureSession.ArmState requestedState = VerisureSession.ArmState.retrieveById(receivedCommand.toString());
+                this.setArmState(requestedState);
+            }
+            logger.debug("Scheduling one time update after receiving update command [{}]", command);
+            scheduler.schedule(this::updateAlarmArmState, 1, TimeUnit.SECONDS);
         }
     }
+
 
     private void startAutomaticRefresh() {
         refreshJob = scheduler.scheduleWithFixedDelay(this::updateAlarmArmState, 0, refresh.intValue(), TimeUnit.SECONDS);
@@ -88,7 +99,6 @@ public class VerisureHandler extends BaseThingHandler {
     }
 
     private synchronized void updateAlarmArmState() {
-
         try {
             if (verisureSession.isLoggedIn() || verisureSession.login()) {
                 VerisureSession.ArmState data = verisureSession.getArmState(giid);
@@ -100,7 +110,20 @@ public class VerisureHandler extends BaseThingHandler {
         } catch (IOException e) {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.OFFLINE.COMMUNICATION_ERROR, e.getMessage());
         }
+    }
 
+    private synchronized void setArmState(VerisureSession.ArmState requestedState) {
+        try {
+            if (verisureSession.isLoggedIn() || verisureSession.login()) {
+                VerisureSession.ArmState updatedState = verisureSession.setArmState(giid, pin, requestedState);
+                updateStatus(ThingStatus.ONLINE);
+                ChannelUID channelUID = new ChannelUID(getThing().getUID(), ALARM_STATUS_CHANNEL);
+                StringType state = new StringType(updatedState.id);
+                updateState(channelUID, state);
+            }
+        } catch (IOException ioe) {
+            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.OFFLINE.CONFIGURATION_ERROR, ioe.getMessage());
+        }
     }
 
     private synchronized void updateVerisureCookie() {

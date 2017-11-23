@@ -36,6 +36,11 @@
                 <description>The base URL for the Verisure API</description>
                 <default>https://e-api02.verisure.com/xbn/2</default>
             </parameter>
+            <parameter name="pin" type="text">
+                <label>PIN code</label>
+                <context>password</context>
+                <description>PIN code to update alarm state (If absent, functionality will be disabled)</description>
+            </parameter>
         </config-description>
     </thing-type>
 

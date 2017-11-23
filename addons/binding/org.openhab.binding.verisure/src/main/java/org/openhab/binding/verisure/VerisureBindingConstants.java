@@ -33,4 +33,5 @@ public class VerisureBindingConstants {
     public static final String PASSWORD_PARAM = "password";
     public static final String REFRESH_PARAM = "refresh";
     public static final String BASEURL_PARAM = "baseurl";
+    public static final String PIN_PARAM = "pin";
 }

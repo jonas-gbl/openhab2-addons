@@ -31,7 +31,7 @@ public class HttpUtils {
             }
         }
 
-        if (data != null && data.isEmpty()) {
+        if (data != null && !data.isEmpty()) {
             connection.setDoOutput(true);
         }
 

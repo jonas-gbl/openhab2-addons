@@ -119,6 +119,31 @@ public class VerisureSession {
         return result;
     }
 
+
+    public ArmState setArmState(String giid, String pin, ArmState state) throws IOException {
+
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Cookie", "vid=" + this.vid);
+        headers.put("Accept", "application/json,text/javascript, */*; q=0.01");
+
+        Map<String, String> body = new HashMap<>();
+        body.put("code", pin);
+        body.put("state", state.id);
+
+
+        Gson gson = new GsonBuilder().create();
+        String json = gson.toJson(body);
+
+        HttpResponse response = HttpUtils.post(verisureUrls.armStateCode(giid), headers, json);
+
+        if (response.getStatus() != 200) {
+            logger.debug("Failed to retrieve arm state for giid [{}]. Response status was [{}]", giid, response.getStatus());
+            handleErrorResponse(response);
+            throw new IOException("Could not retrieve arm state for gid [" + giid + "]. Response status was [" + response.getStatus() + "]");
+        }
+        return getArmState(giid);
+    }
+
     public List<String> retrieveInstallations() throws IOException {
         Map<String, String> headers = new HashMap<>();
         headers.put("Cookie", "vid=" + this.vid);
