@@ -1,7 +1,6 @@
 Manifest-Version: 1.0
 Bundle-ActivationPolicy: lazy
-Bundle-ClassPath: .,
- lib/gson-javatime-serialisers-1.1.1.jar
+Bundle-ClassPath: .,lib/gson-javatime-serialisers-1.1.1.jar,lib/gson-2.5.jar
 Bundle-ManifestVersion: 2
 Bundle-Name: Verisure Binding
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8

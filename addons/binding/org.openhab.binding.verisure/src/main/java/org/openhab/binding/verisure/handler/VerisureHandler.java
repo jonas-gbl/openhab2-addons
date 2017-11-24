@@ -24,6 +24,7 @@ import org.eclipse.smarthome.core.thing.ThingStatusDetail;
 import org.eclipse.smarthome.core.thing.binding.BaseThingHandler;
 import org.eclipse.smarthome.core.types.Command;
 import org.openhab.binding.verisure.VerisureBindingConstants;
+import org.openhab.binding.verisure.internal.ArmStatus;
 import org.openhab.binding.verisure.internal.VerisureSession;
 import org.openhab.binding.verisure.internal.VerisureUrls;
 import org.slf4j.Logger;
@@ -84,7 +85,7 @@ public class VerisureHandler extends BaseThingHandler {
             StringType receivedCommand = (StringType) command;
             if (allowStateUpdate) {
                 logger.debug("Requested state is [{}]", receivedCommand);
-                VerisureSession.ArmState requestedState = VerisureSession.ArmState.retrieveById(receivedCommand.toString());
+                ArmStatus requestedState = ArmStatus.retrieveById(receivedCommand.toString());
                 this.setArmState(requestedState);
             }
             logger.debug("Scheduling one time update after receiving update command [{}]", command);
@@ -101,7 +102,7 @@ public class VerisureHandler extends BaseThingHandler {
     private synchronized void updateAlarmArmState() {
         try {
             if (verisureSession.isLoggedIn() || verisureSession.login()) {
-                VerisureSession.ArmState data = verisureSession.getArmState(giid);
+                ArmStatus data = verisureSession.getArmState(giid);
                 updateStatus(ThingStatus.ONLINE);
                 ChannelUID channelUID = new ChannelUID(getThing().getUID(), ALARM_STATUS_CHANNEL);
                 StringType state = new StringType(data.id);
@@ -112,10 +113,10 @@ public class VerisureHandler extends BaseThingHandler {
         }
     }
 
-    private synchronized void setArmState(VerisureSession.ArmState requestedState) {
+    private synchronized void setArmState(ArmStatus requestedState) {
         try {
             if (verisureSession.isLoggedIn() || verisureSession.login()) {
-                VerisureSession.ArmState updatedState = verisureSession.setArmState(giid, pin, requestedState);
+                ArmStatus updatedState = verisureSession.setArmState(giid, pin, requestedState);
                 updateStatus(ThingStatus.ONLINE);
                 ChannelUID channelUID = new ChannelUID(getThing().getUID(), ALARM_STATUS_CHANNEL);
                 StringType state = new StringType(updatedState.id);

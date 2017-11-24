@@ -19,7 +19,9 @@ import com.google.gson.*;
 import org.eclipse.jetty.util.B64Code;
 import org.openhab.binding.verisure.internal.http.HttpResponse;
 import org.openhab.binding.verisure.internal.http.HttpUtils;
+import org.openhab.binding.verisure.internal.json.ArmState;
 import org.openhab.binding.verisure.internal.json.InstallationOverview;
+import org.openhab.binding.verisure.internal.json.CookieInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,6 +36,7 @@ public class VerisureSession {
     private final Logger logger = LoggerFactory.getLogger(VerisureSession.class);
     private final String username;
     private final String password;
+    private final Gson gson;
     private final VerisureUrls verisureUrls;
     private String vid;
 
@@ -41,6 +44,7 @@ public class VerisureSession {
         this.verisureUrls = verisureUrls;
         this.username = username;
         this.password = password;
+        this.gson = Converters.registerOffsetDateTime(new GsonBuilder()).create();
         this.vid = EMPTY;
     }
 
@@ -50,18 +54,23 @@ public class VerisureSession {
         headers.put("Authorization", basicAuthentication);
         headers.put("Accept", "application/json,text/javascript, */*; q=0.01");
 
+        CookieInfo cookieInfo;
 
         HttpResponse response = HttpUtils.post(verisureUrls.login(), headers, null);
+        String responseBody = response.getBody();
         if (response.getStatus() == 200) {
             try {
-                JsonParser parser = new JsonParser();
-                JsonObject jsonObject = parser.parse(response.getBody()).getAsJsonObject();
-                JsonElement cookieElement = jsonObject.get("cookie");
-                vid = cookieElement.getAsString();
-            } catch (JsonSyntaxException | IllegalArgumentException | NullPointerException exception) {
-                logger.debug("Failed to parse cookie response [{}]", response.getBody());
+                cookieInfo = gson.fromJson(responseBody, CookieInfo.class);
+            } catch (JsonSyntaxException | IllegalArgumentException exception) {
+                logger.debug("Failed to parse cookie response [{}]", responseBody);
                 vid = EMPTY;
                 throw new IOException("Failed to parse cookie response");
+            }
+            if (cookieInfo == null || cookieInfo.getCookie() == null) {
+                vid = EMPTY;
+                throw new IOException("Failed to parse cookie response");
+            } else {
+                vid = cookieInfo.getCookie();
             }
         } else {
             logger.debug("Failed to login. Response status was [{}]", response.getStatus());
@@ -93,23 +102,24 @@ public class VerisureSession {
         return success;
     }
 
-    public ArmState getArmState(String giid) throws IOException {
+    public ArmStatus getArmState(String giid) throws IOException {
         Map<String, String> headers = new HashMap<>();
         headers.put("Cookie", "vid=" + this.vid);
         headers.put("Accept", "application/json,text/javascript, */*; q=0.01");
 
-        ArmState result;
+        ArmStatus result;
 
         HttpResponse response = HttpUtils.get(verisureUrls.armState(giid), headers);
         if (response.getStatus() == 200) {
             String responseBody = response.getBody();
             try {
-                JsonParser parser = new JsonParser();
-                JsonObject jsonObject = parser.parse(responseBody).getAsJsonObject();
-                JsonElement statusType = jsonObject.get("statusType");
-                result = ArmState.retrieveById(statusType.getAsString());
-            } catch (JsonSyntaxException | IllegalArgumentException | NullPointerException exception) {
+                ArmState armState = gson.fromJson(responseBody, ArmState.class);
+                result = armState.getStatusType();
+            } catch (JsonSyntaxException | IllegalArgumentException exception) {
                 logger.debug("Fail to parse arm state response [{}]", responseBody);
+                throw new IOException("Failed to parse arm state for guid [" + giid + "]");
+            }
+            if (result == null) {
                 throw new IOException("Failed to parse arm state for guid [" + giid + "]");
             }
         } else {
@@ -117,12 +127,11 @@ public class VerisureSession {
             handleErrorResponse(response);
             throw new IOException("Could not retrieve arm state for gid [" + giid + "]. Response status was [" + response.getStatus() + "]");
         }
-
         return result;
     }
 
 
-    public ArmState setArmState(String giid, String pin, ArmState state) throws IOException {
+    public ArmStatus setArmState(String giid, String pin, ArmStatus state) throws IOException {
 
         Map<String, String> headers = new HashMap<>();
         headers.put("Cookie", "vid=" + this.vid);
@@ -186,9 +195,7 @@ public class VerisureSession {
         if (response.getStatus() == 200) {
             String responseBody = response.getBody();
             try {
-                Gson gson = Converters.registerOffsetDateTime(new GsonBuilder()).create();
                 installationOverview = gson.fromJson(responseBody, InstallationOverview.class);
-
             } catch (JsonSyntaxException exception) {
                 logger.debug("Failed to parse installations [{}]", responseBody);
                 throw new IOException("Response could not be parsed [" + responseBody + "]");
@@ -213,24 +220,4 @@ public class VerisureSession {
         }
     }
 
-    public enum ArmState {
-        ARMED_HOME("ARMED_HOME", "Armed (Home)"), ARMED_AWAY("ARMED_AWAY", "Armed (Away)"), DISARMED("DISARMED", "Disarmed");
-
-        public final String id;
-        public final String text;
-
-        public static ArmState retrieveById(String value) {
-            for (ArmState candidate : ArmState.values()) {
-                if (candidate.id.equalsIgnoreCase(value)) {
-                    return candidate;
-                }
-            }
-            throw new IllegalArgumentException(value);
-        }
-
-        ArmState(String id, String text) {
-            this.id = id;
-            this.text = text;
-        }
-    }
 }
