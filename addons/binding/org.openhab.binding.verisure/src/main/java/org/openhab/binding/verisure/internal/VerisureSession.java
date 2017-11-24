@@ -14,10 +14,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.fatboyindustrial.gsonjavatime.Converters;
 import com.google.gson.*;
 import org.eclipse.jetty.util.B64Code;
 import org.openhab.binding.verisure.internal.http.HttpResponse;
 import org.openhab.binding.verisure.internal.http.HttpUtils;
+import org.openhab.binding.verisure.internal.json.InstallationOverview;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -172,6 +174,32 @@ public class VerisureSession {
 
 
         return installations;
+    }
+
+    public InstallationOverview retrieveInstallationOverview(String giid) throws IOException {
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Cookie", "vid=" + this.vid);
+        headers.put("Accept", "application/json,text/javascript, */*; q=0.01");
+        InstallationOverview installationOverview;
+
+        HttpResponse response = HttpUtils.get(verisureUrls.overview(giid), headers);
+        if (response.getStatus() == 200) {
+            String responseBody = response.getBody();
+            try {
+                Gson gson = Converters.registerOffsetDateTime(new GsonBuilder()).create();
+                installationOverview = gson.fromJson(responseBody, InstallationOverview.class);
+
+            } catch (JsonSyntaxException exception) {
+                logger.debug("Failed to parse installations [{}]", responseBody);
+                throw new IOException("Response could not be parsed [" + responseBody + "]");
+            }
+        } else {
+            logger.debug("Failed to retrieve installations. Response status was [{}]", response.getStatus());
+            handleErrorResponse(response);
+            throw new IOException("Could not retrieve installations. Response status was [" + response.getStatus() + "]");
+        }
+
+        return installationOverview;
     }
 
     private void handleErrorResponse(HttpResponse response) {

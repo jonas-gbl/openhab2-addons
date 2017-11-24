@@ -69,9 +69,18 @@ public class VerisureUrls {
         }
     }
 
-    public URL armState(String guid) {
+    public URL armState(String giid) {
         try {
-            String path = basePath + "/installation/" + guid + "/" + "armstate";
+            String path = basePath + "/installation/" + giid + "/" + "armstate";
+            return new URL(protocol, host, port, path);
+        } catch (MalformedURLException e) {
+            throw new IllegalStateException("armState URL is misconfigured");
+        }
+    }
+
+    public URL overview(String giid){
+        try {
+            String path = basePath + "/installation/" + giid + "/" + "overview";
             return new URL(protocol, host, port, path);
         } catch (MalformedURLException e) {
             throw new IllegalStateException("armState URL is misconfigured");
