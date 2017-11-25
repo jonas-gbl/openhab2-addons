@@ -27,6 +27,8 @@ import org.openhab.binding.verisure.VerisureBindingConstants;
 import org.openhab.binding.verisure.internal.ArmStatus;
 import org.openhab.binding.verisure.internal.VerisureSession;
 import org.openhab.binding.verisure.internal.VerisureUrls;
+import org.openhab.binding.verisure.internal.json.ArmState;
+import org.openhab.binding.verisure.internal.json.InstallationOverview;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -102,11 +104,18 @@ public class VerisureHandler extends BaseThingHandler {
     private synchronized void updateAlarmArmState() {
         try {
             if (verisureSession.isLoggedIn() || verisureSession.login()) {
-                ArmStatus data = verisureSession.getArmState(giid);
+                InstallationOverview data = verisureSession.retrieveInstallationOverview(giid);
                 updateStatus(ThingStatus.ONLINE);
-                ChannelUID channelUID = new ChannelUID(getThing().getUID(), ALARM_STATUS_CHANNEL);
-                StringType state = new StringType(data.id);
-                updateState(channelUID, state);
+                ArmState armState = data.getArmState();
+                ArmStatus status = armState != null ? armState.getStatusType() : null;
+                if (status != null) {
+                    updateStatus(ThingStatus.ONLINE);
+                    ChannelUID channelUID = new ChannelUID(getThing().getUID(), ALARM_STATUS_CHANNEL);
+                    StringType state = new StringType(status.id);
+                    updateState(channelUID, state);
+                } else {
+                    updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.OFFLINE.COMMUNICATION_ERROR, "Failed to retrieve a valid ArmStatus");
+                }
             }
         } catch (IOException e) {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.OFFLINE.COMMUNICATION_ERROR, e.getMessage());
