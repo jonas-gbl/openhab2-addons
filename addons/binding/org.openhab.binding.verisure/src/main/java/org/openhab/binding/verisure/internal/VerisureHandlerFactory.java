@@ -8,19 +8,22 @@
  */
 package org.openhab.binding.verisure.internal;
 
-import static org.openhab.binding.verisure.VerisureBindingConstants.*;
-
-import java.util.Collections;
 import java.util.Set;
 
+import static org.openhab.binding.verisure.VerisureBindingConstants.THING_TYPE_CLIMATE_SENSOR;
+import static org.openhab.binding.verisure.VerisureBindingConstants.THING_TYPE_VERISURE_ALARM;
+
+import com.google.common.collect.Sets;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
-import org.openhab.binding.verisure.handler.VerisureHandler;
+import org.eclipse.smarthome.core.thing.Bridge;
 import org.eclipse.smarthome.core.thing.Thing;
 import org.eclipse.smarthome.core.thing.ThingTypeUID;
 import org.eclipse.smarthome.core.thing.binding.BaseThingHandlerFactory;
 import org.eclipse.smarthome.core.thing.binding.ThingHandler;
 import org.eclipse.smarthome.core.thing.binding.ThingHandlerFactory;
+import org.openhab.binding.verisure.handler.AlarmHandler;
+import org.openhab.binding.verisure.handler.ClimateSensorHandler;
 import org.osgi.service.component.annotations.Component;
 
 /**
@@ -33,7 +36,7 @@ import org.osgi.service.component.annotations.Component;
 @NonNullByDefault
 public class VerisureHandlerFactory extends BaseThingHandlerFactory {
 
-    private static final Set<ThingTypeUID> SUPPORTED_THING_TYPES_UIDS = Collections.singleton(THING_TYPE_VERISURE_ALARM);
+    private static final Set<ThingTypeUID> SUPPORTED_THING_TYPES_UIDS = Sets.newHashSet(THING_TYPE_VERISURE_ALARM, THING_TYPE_CLIMATE_SENSOR);
 
     @Override
     public boolean supportsThingType(ThingTypeUID thingTypeUID) {
@@ -45,7 +48,9 @@ public class VerisureHandlerFactory extends BaseThingHandlerFactory {
         ThingTypeUID thingTypeUID = thing.getThingTypeUID();
 
         if (thingTypeUID.equals(THING_TYPE_VERISURE_ALARM)) {
-            return new VerisureHandler(thing);
+            return new AlarmHandler((Bridge) thing);
+        } else if (thingTypeUID.equals(THING_TYPE_CLIMATE_SENSOR)) {
+            return new ClimateSensorHandler(thing);
         }
 
         return null;

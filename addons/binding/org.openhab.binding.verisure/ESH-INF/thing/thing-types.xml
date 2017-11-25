@@ -4,7 +4,7 @@
                           xmlns:thing="http://eclipse.org/smarthome/schemas/thing-description/v1.0.0"
                           xsi:schemaLocation="http://eclipse.org/smarthome/schemas/thing-description/v1.0.0 http://eclipse.org/smarthome/schemas/thing-description-1.0.0.xsd">
 
-    <thing-type id="verisure-alarm">
+    <bridge-type id="verisure-alarm">
         <label>Verisure Alarm System</label>
         <description>A thing for a Verisure Alarm System</description>
 
@@ -42,6 +42,29 @@
                 <description>PIN code to update alarm state (If absent, functionality will be disabled)</description>
             </parameter>
         </config-description>
+    </bridge-type>
+
+    <thing-type id="climate-sensor">
+        <supported-bridge-type-refs>
+            <bridge-type-ref id="verisure-alarm"/>
+        </supported-bridge-type-refs>
+
+        <label>Climate Sensor</label>
+        <description>A climate sensor reporting temperature and humidity</description>
+
+        <channels>
+            <channel id="temperature-channel" typeId="temperature-channel"/>
+            <channel id="humidity-channel" typeId="humidity-channel"/>
+            <channel id="location-channel" typeId="location-channel"/>
+            <channel id="last-update-channel" typeId="last-update-channel"/>
+        </channels>
+
+        <config-description>
+            <parameter name="deviceLabel" type="text" required="true">
+                <label>Device Label</label>
+                <description>The label of the device within a specific installation</description>
+            </parameter>
+        </config-description>
     </thing-type>
 
 
@@ -56,6 +79,36 @@
                 <option value="DISARMED">Disarmed</option>
             </options>
         </state>
+    </channel-type>
+
+    <channel-type id="temperature-channel">
+        <item-type>Number</item-type>
+        <label>Temperature</label>
+        <description>Current temperature in degrees celsius</description>
+        <category>Temperature</category>
+        <state readOnly="true" pattern="%.1f °C"/>
+    </channel-type>
+
+    <channel-type id="humidity-channel">
+        <item-type>Number</item-type>
+        <label>Humidity</label>
+        <description>Current humidity in %</description>
+        <category>Humidity</category>
+        <state readOnly="true" pattern="%d %%"/>
+    </channel-type>
+
+    <channel-type id="last-update-channel">
+        <item-type>String</item-type>
+        <label>Last Update</label>
+        <description>Timestamp of last update</description>
+        <state readOnly="true"/>
+    </channel-type>
+
+    <channel-type id="location-channel">
+        <item-type>String</item-type>
+        <label>location</label>
+        <description>location</description>
+        <state readOnly="true"/>
     </channel-type>
 
 </thing:thing-descriptions>

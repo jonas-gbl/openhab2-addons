@@ -17,10 +17,8 @@ import static org.openhab.binding.verisure.VerisureBindingConstants.ALARM_STATUS
 
 import org.eclipse.smarthome.config.core.Configuration;
 import org.eclipse.smarthome.core.library.types.StringType;
-import org.eclipse.smarthome.core.thing.ChannelUID;
-import org.eclipse.smarthome.core.thing.Thing;
-import org.eclipse.smarthome.core.thing.ThingStatus;
-import org.eclipse.smarthome.core.thing.ThingStatusDetail;
+import org.eclipse.smarthome.core.thing.*;
+import org.eclipse.smarthome.core.thing.binding.BaseBridgeHandler;
 import org.eclipse.smarthome.core.thing.binding.BaseThingHandler;
 import org.eclipse.smarthome.core.types.Command;
 import org.openhab.binding.verisure.VerisureBindingConstants;
@@ -33,15 +31,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * The {@link VerisureHandler} is responsible for handling commands, which are
+ * The {@link AlarmHandler} is responsible for handling commands, which are
  * sent to one of the channels.
  *
  * @author Jonas Gabriel - Initial contribution
  */
-public class VerisureHandler extends BaseThingHandler {
+public class AlarmHandler extends BaseBridgeHandler {
 
 
-    private final Logger logger = LoggerFactory.getLogger(VerisureHandler.class);
+    private final Logger logger = LoggerFactory.getLogger(AlarmHandler.class);
 
     private String giid;
     private String pin;
@@ -52,8 +50,8 @@ public class VerisureHandler extends BaseThingHandler {
 
     private ScheduledFuture<?> refreshJob, loginJob;
 
-    public VerisureHandler(Thing thing) {
-        super(thing);
+    public AlarmHandler(Bridge bridge) {
+        super(bridge);
     }
 
     @Override

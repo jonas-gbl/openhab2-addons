@@ -23,9 +23,15 @@ public class VerisureBindingConstants {
     public static final String BINDING_ID = "verisure";
     // List of all Thing Type UIDs
     public static final ThingTypeUID THING_TYPE_VERISURE_ALARM = new ThingTypeUID(BINDING_ID, "verisure-alarm");
+    public static final ThingTypeUID THING_TYPE_CLIMATE_SENSOR = new ThingTypeUID(BINDING_ID, "climate-sensor");
 
     // List of all Channel ids
     public static final String ALARM_STATUS_CHANNEL = "alarm-status-channel";
+    public static final String TEMPERATURE_CHANNEL = "temperature-channel";
+    public static final String HUMIDITY_CHANNEL = "humidity-channel";
+    public static final String LOCATION_CHANNEL = "location-channel";
+    public static final String LAST_UPDATE_CHANNEL = "last-update-channel";
+
 
     // Configuration Parameters;
     public static final String GIID_PARAM = "giid";

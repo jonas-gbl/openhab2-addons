@@ -25,5 +25,6 @@ Import-Package:
  org.slf4j,
  org.eclipse.jetty.util,
  com.google.gson,
- com.google.common.base
+ com.google.common.base,
+ com.google.common.collect
 Service-Component: OSGI-INF/*.xml
