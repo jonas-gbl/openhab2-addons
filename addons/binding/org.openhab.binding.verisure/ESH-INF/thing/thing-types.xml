@@ -67,6 +67,28 @@
         </config-description>
     </thing-type>
 
+    <thing-type id="window-door">
+        <supported-bridge-type-refs>
+            <bridge-type-ref id="verisure-alarm"/>
+        </supported-bridge-type-refs>
+
+        <label>Window/Door Sensor</label>
+        <description>A contact sensor for a window/door</description>
+
+        <channels>
+            <channel id="window-door-channel" typeId="window-door-channel"/>
+            <channel id="location-channel" typeId="location-channel"/>
+            <channel id="last-update-channel" typeId="last-update-channel"/>
+        </channels>
+
+        <config-description>
+            <parameter name="device-label" type="text" required="true">
+                <label>Device Label</label>
+                <description>The label of the device within a specific installation</description>
+            </parameter>
+        </config-description>
+    </thing-type>
+
 
     <channel-type id="alarm-status-channel">
         <item-type>String</item-type>
@@ -108,6 +130,13 @@
         <item-type>String</item-type>
         <label>Location</label>
         <description>location</description>
+        <state readOnly="true"/>
+    </channel-type>
+
+    <channel-type id="window-door-channel">
+        <item-type>Contact</item-type>
+        <label>Status</label>
+        <description>Status of the window/door</description>
         <state readOnly="true"/>
     </channel-type>
 

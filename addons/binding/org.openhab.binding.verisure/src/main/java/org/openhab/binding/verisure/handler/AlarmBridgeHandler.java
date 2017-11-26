@@ -146,6 +146,7 @@ public class AlarmBridgeHandler extends BaseBridgeHandler {
     }
 
     private void notifyInstallationOverviewReceivedListeners(InstallationOverview installationOverview) {
+        logger.debug("Notifying [{}] listener(s)", installationOverviewReceivedListeners.size());
         this.installationOverviewReceivedListeners.forEach(listener -> listener.onInstallationOverviewReceived(installationOverview));
     }
 

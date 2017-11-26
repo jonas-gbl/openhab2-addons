@@ -10,8 +10,7 @@ package org.openhab.binding.verisure.internal;
 
 import java.util.Set;
 
-import static org.openhab.binding.verisure.VerisureBindingConstants.THING_TYPE_CLIMATE_SENSOR;
-import static org.openhab.binding.verisure.VerisureBindingConstants.THING_TYPE_VERISURE_ALARM;
+import static org.openhab.binding.verisure.VerisureBindingConstants.*;
 
 import com.google.common.collect.Sets;
 import org.eclipse.jdt.annotation.NonNullByDefault;
@@ -24,6 +23,7 @@ import org.eclipse.smarthome.core.thing.binding.ThingHandler;
 import org.eclipse.smarthome.core.thing.binding.ThingHandlerFactory;
 import org.openhab.binding.verisure.handler.AlarmBridgeHandler;
 import org.openhab.binding.verisure.handler.ClimateSensorHandler;
+import org.openhab.binding.verisure.handler.DoorWindowSensorHandler;
 import org.osgi.service.component.annotations.Component;
 
 /**
@@ -36,7 +36,8 @@ import org.osgi.service.component.annotations.Component;
 @NonNullByDefault
 public class VerisureHandlerFactory extends BaseThingHandlerFactory {
 
-    private static final Set<ThingTypeUID> SUPPORTED_THING_TYPES_UIDS = Sets.newHashSet(THING_TYPE_VERISURE_ALARM, THING_TYPE_CLIMATE_SENSOR);
+    private static final Set<ThingTypeUID> SUPPORTED_THING_TYPES_UIDS =
+            Sets.newHashSet(THING_TYPE_VERISURE_ALARM, THING_TYPE_CLIMATE_SENSOR, THING_TYPE_WINDOW_DOOR_SENSOR);
 
     @Override
     public boolean supportsThingType(ThingTypeUID thingTypeUID) {
@@ -51,6 +52,8 @@ public class VerisureHandlerFactory extends BaseThingHandlerFactory {
             return new AlarmBridgeHandler((Bridge) thing);
         } else if (thingTypeUID.equals(THING_TYPE_CLIMATE_SENSOR)) {
             return new ClimateSensorHandler(thing);
+        } else if (thingTypeUID.equals(THING_TYPE_WINDOW_DOOR_SENSOR)) {
+            return new DoorWindowSensorHandler(thing);
         }
 
         return null;
