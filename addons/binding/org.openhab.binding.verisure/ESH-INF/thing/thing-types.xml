@@ -89,6 +89,34 @@
         </config-description>
     </thing-type>
 
+    <thing-type id="smart-plug">
+        <supported-bridge-type-refs>
+            <bridge-type-ref id="verisure-alarm"/>
+        </supported-bridge-type-refs>
+
+        <label>Smart Plug</label>
+        <description>A Smart Plug remote switch</description>
+
+        <channels>
+            <channel id="on-off-channel" typeId="on-off-channel"/>
+            <channel id="location-channel" typeId="location-channel"/>
+        </channels>
+
+        <config-description>
+            <parameter name="device-label" type="text" required="true">
+                <label>Device Label</label>
+                <description>The label of the device within a specific installation</description>
+            </parameter>
+        </config-description>
+
+        <!--"isHazardous": false,-->
+        <!--"area": "Kitchen 1",-->
+        <!--"pendingState": "NONE",-->
+        <!--"deviceLabel": "2ALF VL3M",-->
+        <!--"currentState": "OFF",-->
+        <!--"icon": "OTHER"-->
+    </thing-type>
+
 
     <channel-type id="alarm-status-channel">
         <item-type>String</item-type>
@@ -138,6 +166,13 @@
         <label>Status</label>
         <description>Status of the window/door</description>
         <state readOnly="true"/>
+    </channel-type>
+
+    <channel-type id="on-off-channel">
+        <item-type>Switch</item-type>
+        <label>Status</label>
+        <description>Status of the Smart Plug</description>
+        <state readOnly="false"/>
     </channel-type>
 
 </thing:thing-descriptions>

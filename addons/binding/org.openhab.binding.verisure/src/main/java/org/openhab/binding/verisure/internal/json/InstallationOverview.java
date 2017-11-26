@@ -20,29 +20,15 @@ public class InstallationOverview {
 
     private DoorWindow doorWindow;
     private List<ClimateValue> climateValues;
+    private List<SmartPlug> smartPlugs;
     private ArmState armState;
 
     public InstallationOverview() {
 
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof InstallationOverview)) {
-            return false;
-        }
-        InstallationOverview that = (InstallationOverview) o;
-        return Objects.equals(doorWindow, that.doorWindow) &&
-                Objects.equals(climateValues, that.climateValues) &&
-                Objects.equals(armState, that.armState);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(doorWindow, climateValues, armState);
+    public List<SmartPlug> getSmartPlugs() {
+        return smartPlugs;
     }
 
     public DoorWindow getDoorWindow() {
@@ -59,10 +45,31 @@ public class InstallationOverview {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof InstallationOverview)) {
+            return false;
+        }
+        InstallationOverview that = (InstallationOverview) o;
+        return Objects.equals(doorWindow, that.doorWindow) &&
+                Objects.equals(climateValues, that.climateValues) &&
+                Objects.equals(smartPlugs, that.smartPlugs) &&
+                Objects.equals(armState, that.armState);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(doorWindow, climateValues, smartPlugs, armState);
+    }
+
+    @Override
     public String toString() {
         return com.google.common.base.Objects.toStringHelper(this)
                 .add("doorWindow", doorWindow)
                 .add("climateValues", climateValues)
+                .add("smartPlugs", smartPlugs)
                 .add("armState", armState)
                 .toString();
     }

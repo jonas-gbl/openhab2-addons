@@ -8,11 +8,14 @@
  */
 package org.openhab.binding.verisure.handler;
 
-import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
-import static org.openhab.binding.verisure.VerisureBindingConstants.*;
+import static org.openhab.binding.verisure.VerisureBindingConstants.LOCATION_CHANNEL;
+import static org.openhab.binding.verisure.VerisureBindingConstants.ON_OFF_CHANNEL;
 
+import org.eclipse.smarthome.core.library.types.OnOffType;
 import org.eclipse.smarthome.core.library.types.OpenClosedType;
 import org.eclipse.smarthome.core.library.types.StringType;
 import org.eclipse.smarthome.core.thing.ChannelUID;
@@ -21,72 +24,73 @@ import org.eclipse.smarthome.core.thing.ThingStatus;
 import org.eclipse.smarthome.core.thing.ThingStatusDetail;
 import org.eclipse.smarthome.core.types.Command;
 import org.eclipse.smarthome.core.types.UnDefType;
-import org.openhab.binding.verisure.internal.json.DoorWindow;
-import org.openhab.binding.verisure.internal.json.DoorWindowDevice;
 import org.openhab.binding.verisure.internal.json.InstallationOverview;
+import org.openhab.binding.verisure.internal.json.SmartPlug;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * The {@link DoorWindowSensorHandler} is responsible for handling commands, which are
+ * The {@link SmartPlugHandler} is responsible for handling commands, which are
  * sent to one of the channels.
  *
  * @author Jonas Gabriel - Initial contribution
  */
-public class DoorWindowSensorHandler extends VerisureThingHandler {
+public class SmartPlugHandler extends VerisureThingHandler {
 
-    private final Logger logger = LoggerFactory.getLogger(DoorWindowSensorHandler.class);
+    private final Logger logger = LoggerFactory.getLogger(SmartPlugHandler.class);
 
-    public DoorWindowSensorHandler(Thing thing) {
+    public SmartPlugHandler(Thing thing) {
         super(thing);
     }
 
     @Override
     public void handleCommand(ChannelUID channelUID, Command command) {
+        logger.debug("Received command of type [{}] and  content [{}]",
+                     command.getClass().getCanonicalName(), command);
 
+        if (channelUID.getId().equals(ON_OFF_CHANNEL)) {
+
+            if (getBridge() != null) {
+                logger.debug("Scheduling one time update after receiving command of type [{}] and  content [{}]",
+                             command.getClass().getCanonicalName(), command);
+                AlarmBridgeHandler alarmBridgeHandler = (AlarmBridgeHandler) getBridge().getHandler();
+                scheduler.schedule(alarmBridgeHandler::updateAlarmArmState, 1, TimeUnit.SECONDS);
+            }
+        }
     }
-
 
     @Override
     public void onInstallationOverviewReceived(InstallationOverview installationOverview) {
-        DoorWindow doorWindow = installationOverview.getDoorWindow();
-        if (doorWindow != null && doorWindow.getDoorWindowDevice() != null) {
-            Optional<DoorWindowDevice> doorWindowDevice = doorWindow.getDoorWindowDevice().stream()
+        List<SmartPlug> smartPlugs = installationOverview.getSmartPlugs();
+        if (smartPlugs != null) {
+            Optional<SmartPlug> doorWindowDevice = smartPlugs.stream()
                     .filter(candidate -> candidate.getDeviceLabel().equals(this.deviceLabel))
                     .findAny();
 
-            doorWindowDevice.ifPresent(this::updateDoorWindowSensorState);
+            doorWindowDevice.ifPresent(this::updateSmartPlugState);
         } else {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.OFFLINE.COMMUNICATION_ERROR);
         }
     }
 
-    public void updateDoorWindowSensorState(DoorWindowDevice doorWindowDevice) {
+    public void updateSmartPlugState(SmartPlug smartPlug) {
         this.updateStatus(ThingStatus.ONLINE);
 
-        logger.debug("Door/Window sensor update received [{}]", doorWindowDevice);
+        logger.debug("SmartPlug state update received [{}]", smartPlug);
 
-        ChannelUID channelUID = new ChannelUID(getThing().getUID(), DOOR_WINDOW_CHANNEL);
-        String state = doorWindowDevice.getState();
-        if (state.equalsIgnoreCase("OPEN") || state.equalsIgnoreCase("OPENED")) {
+        ChannelUID channelUID = new ChannelUID(getThing().getUID(), ON_OFF_CHANNEL);
+        OnOffType currentState = smartPlug.getCurrentState();
+
+        if (currentState != null) {
             updateState(channelUID, OpenClosedType.OPEN);
-        } else if (state.equalsIgnoreCase("CLOSE") || state.equalsIgnoreCase("CLOSED")) {
-            updateState(channelUID, OpenClosedType.CLOSED);
         } else {
             updateState(channelUID, UnDefType.UNDEF);
         }
 
-        channelUID = new ChannelUID(getThing().getUID(), LAST_UPDATE_CHANNEL);
-        if (doorWindowDevice.getReportTime() != null) {
-            StringType timestamp = new StringType(doorWindowDevice.getReportTime().format(DateTimeFormatter.ISO_OFFSET_TIME));
-            updateState(channelUID, timestamp);
-        } else {
-            updateState(channelUID, UnDefType.UNDEF);
-        }
 
         channelUID = new ChannelUID(getThing().getUID(), LOCATION_CHANNEL);
-        if (doorWindowDevice.getArea() != null) {
-            String sensorArea = doorWindowDevice.getArea();
+        if (smartPlug.getArea() != null) {
+            String sensorArea = smartPlug.getArea();
             StringType location = new StringType(sensorArea);
             updateState(channelUID, location);
         } else {

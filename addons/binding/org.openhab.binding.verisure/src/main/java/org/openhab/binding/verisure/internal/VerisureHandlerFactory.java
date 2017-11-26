@@ -24,6 +24,7 @@ import org.eclipse.smarthome.core.thing.binding.ThingHandlerFactory;
 import org.openhab.binding.verisure.handler.AlarmBridgeHandler;
 import org.openhab.binding.verisure.handler.ClimateSensorHandler;
 import org.openhab.binding.verisure.handler.DoorWindowSensorHandler;
+import org.openhab.binding.verisure.handler.SmartPlugHandler;
 import org.osgi.service.component.annotations.Component;
 
 /**
@@ -37,7 +38,10 @@ import org.osgi.service.component.annotations.Component;
 public class VerisureHandlerFactory extends BaseThingHandlerFactory {
 
     private static final Set<ThingTypeUID> SUPPORTED_THING_TYPES_UIDS =
-            Sets.newHashSet(THING_TYPE_VERISURE_ALARM, THING_TYPE_CLIMATE_SENSOR, THING_TYPE_WINDOW_DOOR_SENSOR);
+            Sets.newHashSet(THING_TYPE_VERISURE_ALARM,
+                            THING_TYPE_CLIMATE_SENSOR,
+                            THING_TYPE_WINDOW_DOOR_SENSOR,
+                            THING_TYPE_SMARTPLUG);
 
     @Override
     public boolean supportsThingType(ThingTypeUID thingTypeUID) {
@@ -54,6 +58,8 @@ public class VerisureHandlerFactory extends BaseThingHandlerFactory {
             return new ClimateSensorHandler(thing);
         } else if (thingTypeUID.equals(THING_TYPE_WINDOW_DOOR_SENSOR)) {
             return new DoorWindowSensorHandler(thing);
+        } else if (thingTypeUID.equals(THING_TYPE_SMARTPLUG)) {
+            return new SmartPlugHandler(thing);
         }
 
         return null;

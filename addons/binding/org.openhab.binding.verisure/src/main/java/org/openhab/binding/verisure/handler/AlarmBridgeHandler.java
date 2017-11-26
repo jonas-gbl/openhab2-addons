@@ -112,7 +112,7 @@ public class AlarmBridgeHandler extends BaseBridgeHandler {
         loginJob = scheduler.scheduleWithFixedDelay(this::updateVerisureCookie, 1, 12, TimeUnit.HOURS);
     }
 
-    private synchronized void updateAlarmArmState() {
+    public synchronized void updateAlarmArmState() {
         try {
             if (verisureSession.isLoggedIn() || verisureSession.login()) {
                 InstallationOverview data = verisureSession.retrieveInstallationOverview(giid);
