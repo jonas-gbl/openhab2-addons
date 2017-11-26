@@ -60,7 +60,7 @@
         </channels>
 
         <config-description>
-            <parameter name="deviceLabel" type="text" required="true">
+            <parameter name="device-label" type="text" required="true">
                 <label>Device Label</label>
                 <description>The label of the device within a specific installation</description>
             </parameter>
@@ -106,7 +106,7 @@
 
     <channel-type id="location-channel">
         <item-type>String</item-type>
-        <label>location</label>
+        <label>Location</label>
         <description>location</description>
         <state readOnly="true"/>
     </channel-type>

@@ -11,8 +11,6 @@ package org.openhab.binding.verisure.internal.json;
 import java.time.OffsetDateTime;
 import java.util.Objects;
 
-import org.openhab.binding.verisure.internal.ArmStatus;
-
 /**
  * The {@link ArmState} is used to connect to the Verisure services.
  *

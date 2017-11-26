@@ -22,7 +22,7 @@ import org.eclipse.smarthome.core.thing.ThingTypeUID;
 import org.eclipse.smarthome.core.thing.binding.BaseThingHandlerFactory;
 import org.eclipse.smarthome.core.thing.binding.ThingHandler;
 import org.eclipse.smarthome.core.thing.binding.ThingHandlerFactory;
-import org.openhab.binding.verisure.handler.AlarmHandler;
+import org.openhab.binding.verisure.handler.AlarmBridgeHandler;
 import org.openhab.binding.verisure.handler.ClimateSensorHandler;
 import org.osgi.service.component.annotations.Component;
 
@@ -48,7 +48,7 @@ public class VerisureHandlerFactory extends BaseThingHandlerFactory {
         ThingTypeUID thingTypeUID = thing.getThingTypeUID();
 
         if (thingTypeUID.equals(THING_TYPE_VERISURE_ALARM)) {
-            return new AlarmHandler((Bridge) thing);
+            return new AlarmBridgeHandler((Bridge) thing);
         } else if (thingTypeUID.equals(THING_TYPE_CLIMATE_SENSOR)) {
             return new ClimateSensorHandler(thing);
         }

@@ -18,17 +18,17 @@ import java.util.Objects;
  */
 public class ClimateValue {
 
-    private float temperature;
+    private Float temperature;
     private String deviceLabel;
-    private float humidity;
+    private Float humidity;
     private String deviceType;
     private OffsetDateTime time;
-    private String deviceAreal;
+    private String deviceArea;
 
     public ClimateValue() {
     }
 
-    public float getTemperature() {
+    public Float getTemperature() {
         return temperature;
     }
 
@@ -36,7 +36,7 @@ public class ClimateValue {
         return deviceLabel;
     }
 
-    public float getHumidity() {
+    public Float getHumidity() {
         return humidity;
     }
 
@@ -48,8 +48,8 @@ public class ClimateValue {
         return time;
     }
 
-    public String getDeviceAreal() {
-        return deviceAreal;
+    public String getDeviceArea() {
+        return deviceArea;
     }
 
     @Override
@@ -66,12 +66,12 @@ public class ClimateValue {
                 Objects.equals(deviceLabel, that.deviceLabel) &&
                 Objects.equals(deviceType, that.deviceType) &&
                 Objects.equals(time, that.time) &&
-                Objects.equals(deviceAreal, that.deviceAreal);
+                Objects.equals(deviceArea, that.deviceArea);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(temperature, deviceLabel, humidity, deviceType, time, deviceAreal);
+        return Objects.hash(temperature, deviceLabel, humidity, deviceType, time, deviceArea);
     }
 
     @Override
@@ -82,7 +82,7 @@ public class ClimateValue {
                 .add("humidity", humidity)
                 .add("deviceType", deviceType)
                 .add("time", time)
-                .add("deviceAreal", deviceAreal)
+                .add("deviceArea", deviceArea)
                 .toString();
     }
 }

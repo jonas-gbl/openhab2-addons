@@ -33,11 +33,4 @@ public class VerisureBindingConstants {
     public static final String LAST_UPDATE_CHANNEL = "last-update-channel";
 
 
-    // Configuration Parameters;
-    public static final String GIID_PARAM = "giid";
-    public static final String USERNAME_PARAM = "username";
-    public static final String PASSWORD_PARAM = "password";
-    public static final String REFRESH_PARAM = "refresh";
-    public static final String BASEURL_PARAM = "baseurl";
-    public static final String PIN_PARAM = "pin";
 }

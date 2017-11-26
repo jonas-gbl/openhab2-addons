@@ -10,6 +10,7 @@ package org.openhab.binding.verisure.handler;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -17,29 +18,41 @@ import static org.openhab.binding.verisure.VerisureBindingConstants.ALARM_STATUS
 
 import org.eclipse.smarthome.config.core.Configuration;
 import org.eclipse.smarthome.core.library.types.StringType;
-import org.eclipse.smarthome.core.thing.*;
+import org.eclipse.smarthome.core.thing.Bridge;
+import org.eclipse.smarthome.core.thing.ChannelUID;
+import org.eclipse.smarthome.core.thing.ThingStatus;
+import org.eclipse.smarthome.core.thing.ThingStatusDetail;
 import org.eclipse.smarthome.core.thing.binding.BaseBridgeHandler;
-import org.eclipse.smarthome.core.thing.binding.BaseThingHandler;
 import org.eclipse.smarthome.core.types.Command;
-import org.openhab.binding.verisure.VerisureBindingConstants;
-import org.openhab.binding.verisure.internal.ArmStatus;
+import org.openhab.binding.verisure.internal.InstallationOverviewReceivedListener;
 import org.openhab.binding.verisure.internal.VerisureSession;
 import org.openhab.binding.verisure.internal.VerisureUrls;
 import org.openhab.binding.verisure.internal.json.ArmState;
+import org.openhab.binding.verisure.internal.json.ArmStatus;
 import org.openhab.binding.verisure.internal.json.InstallationOverview;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * The {@link AlarmHandler} is responsible for handling commands, which are
+ * The {@link AlarmBridgeHandler} is responsible for handling commands, which are
  * sent to one of the channels.
  *
  * @author Jonas Gabriel - Initial contribution
  */
-public class AlarmHandler extends BaseBridgeHandler {
+public class AlarmBridgeHandler extends BaseBridgeHandler {
 
 
-    private final Logger logger = LoggerFactory.getLogger(AlarmHandler.class);
+    // Configuration Parameters;
+    private static final String GIID_PARAM = "giid";
+    private static final String USERNAME_PARAM = "username";
+    private static final String PASSWORD_PARAM = "password";
+    private static final String REFRESH_PARAM = "refresh";
+    private static final String BASEURL_PARAM = "baseurl";
+    private static final String PIN_PARAM = "pin";
+
+    private final Logger logger = LoggerFactory.getLogger(AlarmBridgeHandler.class);
+    private final CopyOnWriteArrayList<InstallationOverviewReceivedListener> installationOverviewReceivedListeners = new CopyOnWriteArrayList<>();
+
 
     private String giid;
     private String pin;
@@ -50,7 +63,7 @@ public class AlarmHandler extends BaseBridgeHandler {
 
     private ScheduledFuture<?> refreshJob, loginJob;
 
-    public AlarmHandler(Bridge bridge) {
+    public AlarmBridgeHandler(Bridge bridge) {
         super(bridge);
     }
 
@@ -60,15 +73,15 @@ public class AlarmHandler extends BaseBridgeHandler {
 
         Configuration config = getThing().getConfiguration();
 
-        giid = (String) config.get(VerisureBindingConstants.GIID_PARAM);
-        String username = (String) config.get(VerisureBindingConstants.USERNAME_PARAM);
-        String password = (String) config.get(VerisureBindingConstants.PASSWORD_PARAM);
-        refresh = (BigDecimal) config.get(VerisureBindingConstants.REFRESH_PARAM);
+        giid = (String) config.get(GIID_PARAM);
+        String username = (String) config.get(USERNAME_PARAM);
+        String password = (String) config.get(PASSWORD_PARAM);
+        refresh = (BigDecimal) config.get(REFRESH_PARAM);
 
-        pin = (String) config.get(VerisureBindingConstants.PIN_PARAM);
+        pin = (String) config.get(PIN_PARAM);
         allowStateUpdate = (pin != null && !pin.isEmpty());
 
-        String baseUrl = (String) config.get(VerisureBindingConstants.BASEURL_PARAM);
+        String baseUrl = (String) config.get(BASEURL_PARAM);
         VerisureUrls verisureUrls = VerisureUrls.withBaseUrl(baseUrl);
 
         try {
@@ -114,10 +127,26 @@ public class AlarmHandler extends BaseBridgeHandler {
                 } else {
                     updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.OFFLINE.COMMUNICATION_ERROR, "Failed to retrieve a valid ArmStatus");
                 }
+
+                notifyInstallationOverviewReceivedListeners(data);
             }
         } catch (IOException e) {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.OFFLINE.COMMUNICATION_ERROR, e.getMessage());
         }
+    }
+
+    public void registerInstallationOverviewReceivedListener(InstallationOverviewReceivedListener listener) {
+        this.installationOverviewReceivedListeners.add(listener);
+        logger.debug("Scheduling one time update after registration of listener");
+        scheduler.schedule(this::updateAlarmArmState, 1, TimeUnit.SECONDS);
+    }
+
+    public void unregisterInstallationOverviewReceivedListener(InstallationOverviewReceivedListener listener) {
+        this.installationOverviewReceivedListeners.remove(listener);
+    }
+
+    private void notifyInstallationOverviewReceivedListeners(InstallationOverview installationOverview) {
+        this.installationOverviewReceivedListeners.forEach(listener -> listener.onInstallationOverviewReceived(installationOverview));
     }
 
     private synchronized void setArmState(ArmStatus requestedState) {

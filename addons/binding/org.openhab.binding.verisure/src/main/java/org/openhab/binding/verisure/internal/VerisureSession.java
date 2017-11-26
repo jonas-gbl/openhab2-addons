@@ -20,6 +20,7 @@ import org.eclipse.jetty.util.B64Code;
 import org.openhab.binding.verisure.internal.http.HttpResponse;
 import org.openhab.binding.verisure.internal.http.HttpUtils;
 import org.openhab.binding.verisure.internal.json.ArmState;
+import org.openhab.binding.verisure.internal.json.ArmStatus;
 import org.openhab.binding.verisure.internal.json.InstallationOverview;
 import org.openhab.binding.verisure.internal.json.CookieInfo;
 import org.slf4j.Logger;
