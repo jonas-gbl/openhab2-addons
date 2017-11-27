@@ -108,13 +108,6 @@
                 <description>The label of the device within a specific installation</description>
             </parameter>
         </config-description>
-
-        <!--"isHazardous": false,-->
-        <!--"area": "Kitchen 1",-->
-        <!--"pendingState": "NONE",-->
-        <!--"deviceLabel": "2ALF VL3M",-->
-        <!--"currentState": "OFF",-->
-        <!--"icon": "OTHER"-->
     </thing-type>
 
 

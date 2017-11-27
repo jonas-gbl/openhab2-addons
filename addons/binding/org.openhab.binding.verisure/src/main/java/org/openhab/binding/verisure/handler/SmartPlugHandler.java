@@ -17,7 +17,6 @@ import static org.openhab.binding.verisure.VerisureBindingConstants.LOCATION_CHA
 import static org.openhab.binding.verisure.VerisureBindingConstants.ON_OFF_CHANNEL;
 
 import org.eclipse.smarthome.core.library.types.OnOffType;
-import org.eclipse.smarthome.core.library.types.OpenClosedType;
 import org.eclipse.smarthome.core.library.types.StringType;
 import org.eclipse.smarthome.core.thing.ChannelUID;
 import org.eclipse.smarthome.core.thing.Thing;
@@ -91,7 +90,7 @@ public class SmartPlugHandler extends VerisureThingHandler {
         OnOffType currentState = smartPlug.getCurrentState();
 
         if (currentState != null) {
-            updateState(channelUID, OpenClosedType.OPEN);
+            updateState(channelUID, currentState);
         } else {
             updateState(channelUID, UnDefType.UNDEF);
         }

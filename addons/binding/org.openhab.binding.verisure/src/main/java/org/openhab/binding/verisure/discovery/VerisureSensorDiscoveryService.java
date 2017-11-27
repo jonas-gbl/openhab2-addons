@@ -42,7 +42,7 @@ public class VerisureSensorDiscoveryService extends AbstractDiscoveryService imp
                             THING_TYPE_WINDOW_DOOR_SENSOR,
                             THING_TYPE_SMARTPLUG);
 
-    private static final int SEARCH_TIME = 60;
+    private static final int SEARCH_TIME = 5;
     private final Logger logger = LoggerFactory.getLogger(VerisureSensorDiscoveryService.class);
     private AlarmBridgeHandler alarmBridgeHandler;
     private String giid;
@@ -88,6 +88,7 @@ public class VerisureSensorDiscoveryService extends AbstractDiscoveryService imp
 
         for (ClimateValue climateValue : installationOverview.getClimateValues()) {
             String deviceLabel = climateValue.getDeviceLabel();
+            String deviceArea = climateValue.getDeviceArea();
             String normalizedDeviceLabel = StringUtils.lowerCase(deviceLabel.replaceAll("[^a-zA-Z0-9_]", "_"));
             ThingUID thingUID = new ThingUID(THING_TYPE_CLIMATE_SENSOR, bridgeUID, normalizedDeviceLabel);
 
@@ -97,7 +98,7 @@ public class VerisureSensorDiscoveryService extends AbstractDiscoveryService imp
             DiscoveryResult discoveryResult = DiscoveryResultBuilder.create(thingUID)
                     .withProperties(properties)
                     .withBridge(bridgeUID)
-                    .withLabel("Climate sensor " + deviceLabel)
+                    .withLabel("Climate sensor "  + deviceLabel + " (" + deviceArea + ")")
                     .build();
 
             thingDiscovered(discoveryResult);
@@ -106,6 +107,7 @@ public class VerisureSensorDiscoveryService extends AbstractDiscoveryService imp
         List<DoorWindowDevice> doorWindowDevices = installationOverview.getDoorWindow().getDoorWindowDevice();
         for (DoorWindowDevice doorWindowDevice : doorWindowDevices) {
             String deviceLabel = doorWindowDevice.getDeviceLabel();
+            String deviceArea = doorWindowDevice.getArea();
             String normalizedDeviceLabel = StringUtils.lowerCase(deviceLabel.replaceAll("[^a-zA-Z0-9_]", "_"));
             ThingUID thingUID = new ThingUID(THING_TYPE_WINDOW_DOOR_SENSOR, bridgeUID, normalizedDeviceLabel);
 
@@ -115,7 +117,7 @@ public class VerisureSensorDiscoveryService extends AbstractDiscoveryService imp
             DiscoveryResult discoveryResult = DiscoveryResultBuilder.create(thingUID)
                     .withProperties(properties)
                     .withBridge(bridgeUID)
-                    .withLabel("Door/Window sensor " + deviceLabel)
+                    .withLabel("Opening sensor " + deviceLabel + " (" + deviceArea + ")")
                     .build();
 
             thingDiscovered(discoveryResult);
@@ -125,6 +127,7 @@ public class VerisureSensorDiscoveryService extends AbstractDiscoveryService imp
         List<SmartPlug> smartPlugs = installationOverview.getSmartPlugs();
         for (SmartPlug smartPlug : smartPlugs) {
             String deviceLabel = smartPlug.getDeviceLabel();
+            String deviceArea = smartPlug.getArea();
             String normalizedDeviceLabel = StringUtils.lowerCase(deviceLabel.replaceAll("[^a-zA-Z0-9_]", "_"));
             ThingUID thingUID = new ThingUID(THING_TYPE_SMARTPLUG, bridgeUID, normalizedDeviceLabel);
 
@@ -134,7 +137,7 @@ public class VerisureSensorDiscoveryService extends AbstractDiscoveryService imp
             DiscoveryResult discoveryResult = DiscoveryResultBuilder.create(thingUID)
                     .withProperties(properties)
                     .withBridge(bridgeUID)
-                    .withLabel("Smart Plug " + deviceLabel)
+                    .withLabel("Smart Plug "  + deviceLabel + " (" + deviceArea + ")")
                     .build();
 
             thingDiscovered(discoveryResult);
@@ -150,12 +153,6 @@ public class VerisureSensorDiscoveryService extends AbstractDiscoveryService imp
 
     @Override
     public void onInstallationOverviewReceived(InstallationOverview installationOverview) {
-//        long timestamp = new Date().getTime();
-//        removeOlderResults(timestamp);
         processInstallationOverview(installationOverview);
-    }
-
-    private ThingUID getThingUID(InstallationOverview appliance) {
-        return null;
     }
 }

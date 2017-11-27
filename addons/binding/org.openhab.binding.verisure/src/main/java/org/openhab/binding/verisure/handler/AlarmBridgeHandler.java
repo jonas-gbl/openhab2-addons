@@ -24,6 +24,7 @@ import org.eclipse.smarthome.core.thing.ThingStatus;
 import org.eclipse.smarthome.core.thing.ThingStatusDetail;
 import org.eclipse.smarthome.core.thing.binding.BaseBridgeHandler;
 import org.eclipse.smarthome.core.types.Command;
+import org.eclipse.smarthome.core.types.RefreshType;
 import org.openhab.binding.verisure.internal.InstallationOverviewReceivedListener;
 import org.openhab.binding.verisure.internal.VerisureSession;
 import org.openhab.binding.verisure.internal.VerisureUrls;
@@ -43,12 +44,12 @@ public class AlarmBridgeHandler extends BaseBridgeHandler {
 
 
     // Configuration Parameters;
-    private static final String GIID_PARAM = "giid";
-    private static final String USERNAME_PARAM = "username";
-    private static final String PASSWORD_PARAM = "password";
-    private static final String REFRESH_PARAM = "refresh";
-    private static final String BASEURL_PARAM = "baseurl";
-    private static final String PIN_PARAM = "pin";
+    public static final String GIID_PARAM = "giid";
+    public static final String USERNAME_PARAM = "username";
+    public static final String PASSWORD_PARAM = "password";
+    public static final String REFRESH_PARAM = "refresh";
+    public static final String BASEURL_PARAM = "baseurl";
+    public static final String PIN_PARAM = "pin";
 
     private final Logger logger = LoggerFactory.getLogger(AlarmBridgeHandler.class);
     private final CopyOnWriteArrayList<InstallationOverviewReceivedListener> installationOverviewReceivedListeners = new CopyOnWriteArrayList<>();
@@ -79,16 +80,18 @@ public class AlarmBridgeHandler extends BaseBridgeHandler {
         logger.debug("Initializing Verisure handler.");
 
         Configuration config = getThing().getConfiguration();
-
+        String baseUrl = (String) config.get(BASEURL_PARAM);
         giid = (String) config.get(GIID_PARAM);
         String username = (String) config.get(USERNAME_PARAM);
         String password = (String) config.get(PASSWORD_PARAM);
         refresh = (BigDecimal) config.get(REFRESH_PARAM);
 
+        logger.debug("AlarmBridgeHandler Configuration [baseUrl = {}, giid = {}, username = {}, password = {}, refresh = {}]",
+                     baseUrl, giid, username, password, refresh);
+
         pin = (String) config.get(PIN_PARAM);
         allowStateUpdate = (pin != null && !pin.isEmpty());
 
-        String baseUrl = (String) config.get(BASEURL_PARAM);
         VerisureUrls verisureUrls = VerisureUrls.withBaseUrl(baseUrl);
 
         try {
@@ -109,6 +112,9 @@ public class AlarmBridgeHandler extends BaseBridgeHandler {
                 this.setArmState(requestedState);
             }
             logger.debug("Scheduling one time update after receiving update command [{}]", command);
+            scheduler.schedule(this::updateAlarmArmState, 1, TimeUnit.SECONDS);
+        } else if (command instanceof RefreshType){
+            logger.debug("Scheduling one time update after receiving refresh command [{}]", command);
             scheduler.schedule(this::updateAlarmArmState, 1, TimeUnit.SECONDS);
         }
     }

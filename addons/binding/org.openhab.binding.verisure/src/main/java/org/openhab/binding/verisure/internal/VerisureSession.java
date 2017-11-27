@@ -9,10 +9,17 @@
 package org.openhab.binding.verisure.internal;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import com.fatboyindustrial.gsonjavatime.Converters;
-import com.google.gson.*;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonSyntaxException;
+import com.google.gson.reflect.TypeToken;
+import org.apache.commons.lang.StringUtils;
 import org.eclipse.jetty.util.B64Code;
 import org.openhab.binding.verisure.internal.http.HttpResponse;
 import org.openhab.binding.verisure.internal.http.HttpUtils;
@@ -173,25 +180,30 @@ public class VerisureSession {
                      deviceLabel, giid, active);
     }
 
-    public List<String> retrieveInstallations() throws IOException {
+    public List<Installation> retrieveInstallations() throws IOException {
         Map<String, String> headers = new HashMap<>();
         headers.put("Cookie", "vid=" + this.vid);
         headers.put("Accept", "application/json,text/javascript, */*; q=0.01");
-        List<String> installations = new ArrayList<>();
+        List<Installation> installations;
 
         HttpResponse response = HttpUtils.get(verisureUrls.installations(this.username), headers);
         if (response.getStatus() == 200) {
             String responseBody = response.getBody();
             try {
-                JsonParser parser = new JsonParser();
-                JsonArray jArray = parser.parse(responseBody).getAsJsonArray();
-                for (JsonElement obj : jArray) {
-                    JsonElement giid = obj.getAsJsonObject().get("giid");
-                    installations.add(giid.getAsString());
-                }
-            } catch (JsonSyntaxException | NullPointerException exception) {
+
+                installations = gson.fromJson(responseBody,
+                                              new TypeToken<List<Installation>>() {
+                                              }.getType());
+
+            } catch (JsonSyntaxException exception) {
                 logger.debug("Failed to parse installations [{}]", responseBody);
                 throw new IOException("Response could not be parsed [" + responseBody + "]");
+            }
+
+            for (Installation installation : installations) {
+                if (StringUtils.isBlank(installation.getGiid())) {
+                    throw new IOException("Response was invalid. No GIIDs were found.");
+                }
             }
         } else {
             logger.debug("Failed to retrieve installations. Response status was [{}]", response.getStatus());
