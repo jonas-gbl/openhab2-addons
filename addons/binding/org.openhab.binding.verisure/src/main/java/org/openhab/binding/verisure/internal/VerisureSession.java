@@ -13,6 +13,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import com.fatboyindustrial.gsonjavatime.Converters;
 import com.google.gson.Gson;
@@ -40,6 +42,7 @@ public class VerisureSession {
     private final String password;
     private final Gson gson;
     private final VerisureUrls verisureUrls;
+    private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private String vid;
 
     public VerisureSession(VerisureUrls verisureUrls, String username, String password) {
@@ -47,7 +50,7 @@ public class VerisureSession {
         this.username = username;
         this.password = password;
         this.gson = Converters.registerOffsetDateTime(new GsonBuilder()).create();
-        this.vid = EMPTY;
+        setCookie(EMPTY);
     }
 
     public boolean login() throws IOException {
@@ -65,14 +68,14 @@ public class VerisureSession {
                 cookieInfo = gson.fromJson(responseBody, CookieInfo.class);
             } catch (JsonSyntaxException | IllegalArgumentException exception) {
                 logger.debug("Failed to parse cookie response [{}]", responseBody);
-                vid = EMPTY;
+                setCookie(EMPTY);
                 throw new IOException("Failed to parse cookie response");
             }
             if (cookieInfo == null || cookieInfo.getCookie() == null) {
-                vid = EMPTY;
+                setCookie(EMPTY);
                 throw new IOException("Failed to parse cookie response");
             } else {
-                vid = cookieInfo.getCookie();
+                setCookie(cookieInfo.getCookie());
             }
         } else {
             logger.debug("Failed to login. Response status was [{}]", response.getStatus());
@@ -84,13 +87,13 @@ public class VerisureSession {
     }
 
     public boolean isLoggedIn() {
-        return !vid.isEmpty();
+        return !getCookie().isEmpty();
     }
 
     public boolean logout() throws IOException {
 
         Map<String, String> headers = new HashMap<>();
-        headers.put("Cookie", "vid=" + this.vid);
+        headers.put("Cookie", "vid=" + getCookie());
         headers.put("Accept", "application/json,text/javascript, */*; q=0.01");
 
         boolean success;
@@ -98,7 +101,7 @@ public class VerisureSession {
             HttpResponse response = HttpUtils.delete(verisureUrls.login(), headers);
             success = (response.getStatus() == 200);
         } finally {
-            this.vid = EMPTY;
+            setCookie(EMPTY);
         }
 
         return success;
@@ -106,7 +109,7 @@ public class VerisureSession {
 
     public ArmStatus getArmState(String giid) throws IOException {
         Map<String, String> headers = new HashMap<>();
-        headers.put("Cookie", "vid=" + this.vid);
+        headers.put("Cookie", "vid=" + getCookie());
         headers.put("Accept", "application/json,text/javascript, */*; q=0.01");
 
         ArmStatus result;
@@ -136,14 +139,12 @@ public class VerisureSession {
     public ArmStatus setArmState(String giid, String pin, ArmStatus state) throws IOException {
 
         Map<String, String> headers = new HashMap<>();
-        headers.put("Cookie", "vid=" + this.vid);
+        headers.put("Cookie", "vid=" + getCookie());
         headers.put("Accept", "application/json,text/javascript, */*; q=0.01");
 
-        Map<String, String> body = new HashMap<>();
-        body.put("code", pin);
-        body.put("state", state.id);
+        ArmCommand armCommand = new ArmCommand(pin, state);
 
-        String json = gson.toJson(Collections.singleton(body));
+        String json = gson.toJson(Collections.singleton(armCommand));
 
         HttpResponse response = HttpUtils.post(verisureUrls.armStateCode(giid), headers, json);
 
@@ -157,7 +158,7 @@ public class VerisureSession {
 
     public void setSmartPlug(String giid, String deviceLabel, boolean active) throws IOException {
         Map<String, String> headers = new HashMap<>();
-        headers.put("Cookie", "vid=" + this.vid);
+        headers.put("Cookie", "vid=" + getCookie());
         headers.put("Accept", "application/json");
         headers.put("Content-Type", "application/json; charset=UTF-8");
 
@@ -182,7 +183,7 @@ public class VerisureSession {
 
     public List<Installation> retrieveInstallations() throws IOException {
         Map<String, String> headers = new HashMap<>();
-        headers.put("Cookie", "vid=" + this.vid);
+        headers.put("Cookie", "vid=" + getCookie());
         headers.put("Accept", "application/json,text/javascript, */*; q=0.01");
         List<Installation> installations;
 
@@ -217,7 +218,7 @@ public class VerisureSession {
 
     public InstallationOverview retrieveInstallationOverview(String giid) throws IOException {
         Map<String, String> headers = new HashMap<>();
-        headers.put("Cookie", "vid=" + this.vid);
+        headers.put("Cookie", "vid=" + getCookie());
         headers.put("Accept", "application/json,text/javascript, */*; q=0.01");
         InstallationOverview installationOverview;
 
@@ -250,4 +251,24 @@ public class VerisureSession {
         }
     }
 
+    private String getCookie() {
+        String result;
+        try {
+            lock.readLock().lock();
+            result = this.vid;
+        } finally {
+            lock.readLock().unlock();
+        }
+
+        return result;
+    }
+
+    private void setCookie(String vid) {
+        try {
+            lock.writeLock().lock();
+            this.vid = vid;
+        } finally {
+            lock.writeLock().unlock();
+        }
+    }
 }
