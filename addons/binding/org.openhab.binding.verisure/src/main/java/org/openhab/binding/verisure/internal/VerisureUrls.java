@@ -78,7 +78,16 @@ public class VerisureUrls {
         }
     }
 
-    public URL overview(String giid){
+    public URL smartPlug(String giid) {
+        try {
+            String path = basePath + "/installation/" + giid + "/" + "smartplug/state";
+            return new URL(protocol, host, port, path);
+        } catch (MalformedURLException e) {
+            throw new IllegalStateException("armState URL is misconfigured");
+        }
+    }
+
+    public URL overview(String giid) {
         try {
             String path = basePath + "/installation/" + giid + "/" + "overview";
             return new URL(protocol, host, port, path);

@@ -60,11 +60,18 @@ public class AlarmBridgeHandler extends BaseBridgeHandler {
     private BigDecimal refresh;
 
     private VerisureSession verisureSession;
-
     private ScheduledFuture<?> refreshJob, loginJob;
 
     public AlarmBridgeHandler(Bridge bridge) {
         super(bridge);
+    }
+
+    public VerisureSession getVerisureSession() {
+        return verisureSession;
+    }
+
+    public String getGiid() {
+        return giid;
     }
 
     @Override

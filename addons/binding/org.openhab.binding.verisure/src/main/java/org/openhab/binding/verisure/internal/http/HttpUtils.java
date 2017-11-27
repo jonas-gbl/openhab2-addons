@@ -27,7 +27,7 @@ public class HttpUtils {
 
         if (headers != null) {
             for (Map.Entry<String, String> entry : headers.entrySet()) {
-                connection.addRequestProperty(entry.getKey(), entry.getValue());
+                connection.setRequestProperty(entry.getKey(), entry.getValue());
             }
         }
 
@@ -35,14 +35,12 @@ public class HttpUtils {
             connection.setDoOutput(true);
         }
 
-        connection.connect();
-
 
         if (data != null && !data.isEmpty()) {
             OutputStream out = null;
             try {
                 out = connection.getOutputStream();
-                out.write(data.getBytes());
+                out.write(data.getBytes("UTF-8"));
                 out.flush();
             } finally {
                 if (out != null) {
@@ -51,6 +49,7 @@ public class HttpUtils {
             }
         }
 
+        connection.disconnect();
         return retrieveResponse(connection);
     }
 
@@ -61,7 +60,7 @@ public class HttpUtils {
 
         if (headers != null) {
             for (Map.Entry<String, String> entry : headers.entrySet()) {
-                connection.addRequestProperty(entry.getKey(), entry.getValue());
+                connection.setRequestProperty(entry.getKey(), entry.getValue());
             }
         }
 
@@ -94,7 +93,7 @@ public class HttpUtils {
             InputStream in = connection.getInputStream();
             result = getInputStreamAsString(in);
         }
-        return new HttpResponse(connection.getResponseCode(), result);
+        return new HttpResponse(statusCode, result);
     }
 
     private static String getInputStreamAsString(InputStream in) throws IOException {

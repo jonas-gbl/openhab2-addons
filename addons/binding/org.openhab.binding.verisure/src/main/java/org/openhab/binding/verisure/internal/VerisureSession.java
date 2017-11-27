@@ -9,20 +9,14 @@
 package org.openhab.binding.verisure.internal;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import com.fatboyindustrial.gsonjavatime.Converters;
 import com.google.gson.*;
 import org.eclipse.jetty.util.B64Code;
 import org.openhab.binding.verisure.internal.http.HttpResponse;
 import org.openhab.binding.verisure.internal.http.HttpUtils;
-import org.openhab.binding.verisure.internal.json.ArmState;
-import org.openhab.binding.verisure.internal.json.ArmStatus;
-import org.openhab.binding.verisure.internal.json.InstallationOverview;
-import org.openhab.binding.verisure.internal.json.CookieInfo;
+import org.openhab.binding.verisure.internal.json.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -142,9 +136,7 @@ public class VerisureSession {
         body.put("code", pin);
         body.put("state", state.id);
 
-
-        Gson gson = new GsonBuilder().create();
-        String json = gson.toJson(body);
+        String json = gson.toJson(Collections.singleton(body));
 
         HttpResponse response = HttpUtils.post(verisureUrls.armStateCode(giid), headers, json);
 
@@ -154,6 +146,31 @@ public class VerisureSession {
             throw new IOException("Could not retrieve arm state for gid [" + giid + "]. Response status was [" + response.getStatus() + "]");
         }
         return getArmState(giid);
+    }
+
+    public void setSmartPlug(String giid, String deviceLabel, boolean active) throws IOException {
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Cookie", "vid=" + this.vid);
+        headers.put("Accept", "application/json");
+        headers.put("Content-Type", "application/json; charset=UTF-8");
+
+        SmartPlugCommand smartPlugCommand = new SmartPlugCommand(deviceLabel, active);
+
+        String json = gson.toJson(Collections.singletonList(smartPlugCommand));
+
+        logger.debug("Sending SmartplugCommand json={}", json);
+
+        HttpResponse response = HttpUtils.post(verisureUrls.smartPlug(giid), headers, json);
+
+        if (response.getStatus() != 200) {
+            logger.debug("Failed to set Smart Plug [{}] on giid [{}] to state [{}]. Response status was [{}]. Response body was [{}]",
+                         deviceLabel, giid, active,
+                         response.getStatus(), response.getBody());
+            handleErrorResponse(response);
+            throw new IOException("Could not retrieve arm state for gid [" + giid + "]. Response status was [" + response.getStatus() + "]");
+        }
+        logger.debug("Successfully set Smart Plug [{}] on giid [{}] to state [{}]",
+                     deviceLabel, giid, active);
     }
 
     public List<String> retrieveInstallations() throws IOException {

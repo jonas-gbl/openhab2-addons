@@ -8,6 +8,7 @@
  */
 package org.openhab.binding.verisure.handler;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -24,6 +25,7 @@ import org.eclipse.smarthome.core.thing.ThingStatus;
 import org.eclipse.smarthome.core.thing.ThingStatusDetail;
 import org.eclipse.smarthome.core.types.Command;
 import org.eclipse.smarthome.core.types.UnDefType;
+import org.openhab.binding.verisure.internal.VerisureSession;
 import org.openhab.binding.verisure.internal.json.InstallationOverview;
 import org.openhab.binding.verisure.internal.json.SmartPlug;
 import org.slf4j.Logger;
@@ -48,12 +50,19 @@ public class SmartPlugHandler extends VerisureThingHandler {
         logger.debug("Received command of type [{}] and  content [{}]",
                      command.getClass().getCanonicalName(), command);
 
-        if (channelUID.getId().equals(ON_OFF_CHANNEL)) {
-
+        if (channelUID.getId().equals(ON_OFF_CHANNEL) && command instanceof OnOffType) {
+            OnOffType receivedCommand = (OnOffType) command;
             if (getBridge() != null) {
+                AlarmBridgeHandler alarmBridgeHandler = (AlarmBridgeHandler) getBridge().getHandler();
+                VerisureSession verisureSession = alarmBridgeHandler.getVerisureSession();
+                try {
+                    verisureSession.setSmartPlug(alarmBridgeHandler.getGiid(), deviceLabel, receivedCommand == OnOffType.ON);
+                } catch (IOException ioe) {
+                    updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.OFFLINE.COMMUNICATION_ERROR);
+                }
+
                 logger.debug("Scheduling one time update after receiving command of type [{}] and  content [{}]",
                              command.getClass().getCanonicalName(), command);
-                AlarmBridgeHandler alarmBridgeHandler = (AlarmBridgeHandler) getBridge().getHandler();
                 scheduler.schedule(alarmBridgeHandler::updateAlarmArmState, 1, TimeUnit.SECONDS);
             }
         }
