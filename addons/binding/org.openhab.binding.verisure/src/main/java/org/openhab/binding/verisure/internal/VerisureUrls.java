@@ -14,8 +14,8 @@ import java.net.URL;
 import com.google.common.base.Preconditions;
 
 /**
- * The {@link VerisureUrls} is responsible for handling commands, which are
- * sent to one of the channels.
+ * The {@link VerisureUrls} is a small utility class for generating URLs to the Verisure backend.
+ * It is a port from https://github.com/persandstrom/python-verisure.
  *
  * @author Jonas Gabriel - Initial contribution
  */

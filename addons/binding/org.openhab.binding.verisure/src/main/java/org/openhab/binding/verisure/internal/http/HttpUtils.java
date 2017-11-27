@@ -14,8 +14,7 @@ import java.net.URL;
 import java.util.Map;
 
 /**
- * The {@link HttpUtils} is responsible for creating things and thing
- * handlers.
+ * The {@link HttpUtils} provides basic helper methods to perform HTTP actions. On error a  {@link IOException} is thrown.
  *
  * @author Jonas Gabriel - Initial contribution
  */

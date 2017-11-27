@@ -10,12 +10,15 @@ package org.openhab.binding.verisure.handler;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import static org.openhab.binding.verisure.VerisureBindingConstants.ALARM_STATUS_CHANNEL;
 
+import com.google.common.base.Preconditions;
+import org.apache.commons.lang.StringUtils;
 import org.eclipse.smarthome.config.core.Configuration;
 import org.eclipse.smarthome.core.library.types.StringType;
 import org.eclipse.smarthome.core.thing.Bridge;
@@ -35,8 +38,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * The {@link AlarmBridgeHandler} is responsible for handling commands, which are
- * sent to one of the channels.
+ * The {@link AlarmBridgeHandler} a bridge handler for handing a Verisure Alarm Installation
  *
  * @author Jonas Gabriel - Initial contribution
  */
@@ -77,28 +79,33 @@ public class AlarmBridgeHandler extends BaseBridgeHandler {
 
     @Override
     public void initialize() {
-        logger.debug("Initializing Verisure handler.");
-
-        Configuration config = getThing().getConfiguration();
-        String baseUrl = (String) config.get(BASEURL_PARAM);
-        giid = (String) config.get(GIID_PARAM);
-        String username = (String) config.get(USERNAME_PARAM);
-        String password = (String) config.get(PASSWORD_PARAM);
-        refresh = (BigDecimal) config.get(REFRESH_PARAM);
-
-        logger.debug("AlarmBridgeHandler Configuration [baseUrl = {}, giid = {}, username = {}, password = {}, refresh = {}]",
-                     baseUrl, giid, username, password, refresh);
-
-        pin = (String) config.get(PIN_PARAM);
-        allowStateUpdate = (pin != null && !pin.isEmpty());
-
-        VerisureUrls verisureUrls = VerisureUrls.withBaseUrl(baseUrl);
-
         try {
+            logger.debug("Initializing AlarmBridgeHandler.");
+
+            Configuration config = getThing().getConfiguration();
+            String baseUrl = (String) config.get(BASEURL_PARAM);
+            giid = (String) config.get(GIID_PARAM);
+            String username = (String) config.get(USERNAME_PARAM);
+            String password = (String) config.get(PASSWORD_PARAM);
+            refresh = (BigDecimal) config.get(REFRESH_PARAM);
+            pin = (String) config.get(PIN_PARAM);
+
+            Preconditions.checkState(StringUtils.isNotEmpty(baseUrl), "base URL is empty");
+            Preconditions.checkState(StringUtils.isNotEmpty(giid), "GIID misconfigured");
+            Preconditions.checkState(StringUtils.isNotEmpty(username), "Username is empty");
+            Preconditions.checkState(StringUtils.isNotEmpty(password), "Password is empty");
+            Preconditions.checkState(Objects.nonNull(refresh), "Refresh is null");
+            Preconditions.checkState(refresh.intValue() > 0, "Refresh is not positive");
+
+
+            allowStateUpdate = StringUtils.isNotBlank(pin);
+            VerisureUrls verisureUrls = VerisureUrls.withBaseUrl(baseUrl);
+
+
             verisureSession = new VerisureSession(verisureUrls, username, password);
             startAutomaticRefresh();
-        } catch (IllegalArgumentException ilae) {
-            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.OFFLINE.CONFIGURATION_ERROR, ilae.getMessage());
+        } catch (IllegalArgumentException | IllegalStateException exception) {
+            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.OFFLINE.CONFIGURATION_ERROR, exception.getMessage());
         }
     }
 
@@ -107,13 +114,13 @@ public class AlarmBridgeHandler extends BaseBridgeHandler {
         if (channelUID.getId().equals(ALARM_STATUS_CHANNEL) && command instanceof StringType) {
             StringType receivedCommand = (StringType) command;
             if (allowStateUpdate) {
-                logger.debug("Requested state is [{}]", receivedCommand);
+                logger.debug("Requested arm state is [{}]", receivedCommand);
                 ArmStatus requestedState = ArmStatus.retrieveById(receivedCommand.toString());
                 this.setArmState(requestedState);
             }
             logger.debug("Scheduling one time update after receiving update command [{}]", command);
             scheduler.schedule(this::updateAlarmArmState, 1, TimeUnit.SECONDS);
-        } else if (command instanceof RefreshType){
+        } else if (command instanceof RefreshType) {
             logger.debug("Scheduling one time update after receiving refresh command [{}]", command);
             scheduler.schedule(this::updateAlarmArmState, 1, TimeUnit.SECONDS);
         }

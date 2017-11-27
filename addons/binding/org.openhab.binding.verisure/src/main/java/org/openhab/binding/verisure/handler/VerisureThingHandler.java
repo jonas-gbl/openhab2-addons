@@ -16,8 +16,8 @@ import org.eclipse.smarthome.core.thing.binding.BaseThingHandler;
 import org.openhab.binding.verisure.internal.InstallationOverviewReceivedListener;
 
 /**
- * The {@link VerisureThingHandler} is responsible for handling commands, which are
- * sent to one of the channels.
+ * The {@link VerisureThingHandler} is an abstract class used for handlers under an alarm bridge. It registers itself to
+ * receive {@link org.openhab.binding.verisure.internal.json.InstallationOverview} updates.
  *
  * @author Jonas Gabriel - Initial contribution
  */

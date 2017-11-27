@@ -14,9 +14,6 @@ import com.google.gson.annotations.SerializedName;
 import org.eclipse.smarthome.core.library.types.OnOffType;
 
 /**
- * The {@link SmartPlug} is responsible for handling commands, which are
- * sent to one of the channels.
- *
  * @author Jonas Gabriel - Initial contribution
  */
 public class SmartPlug {

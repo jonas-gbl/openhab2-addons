@@ -9,8 +9,6 @@
 package org.openhab.binding.verisure.internal.json;
 
 /**
- * The {@link ArmStatus} is used to connect to the Verisure services.
- *
  * @author Jonas Gabriel - Initial contribution
  */
 public enum ArmStatus {

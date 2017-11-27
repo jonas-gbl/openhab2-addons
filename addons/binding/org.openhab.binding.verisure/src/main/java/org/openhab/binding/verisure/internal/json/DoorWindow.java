@@ -12,8 +12,6 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * The {@link DoorWindow} is used to connect to the Verisure services.
- *
  * @author Jonas Gabriel - Initial contribution
  */
 public class DoorWindow {

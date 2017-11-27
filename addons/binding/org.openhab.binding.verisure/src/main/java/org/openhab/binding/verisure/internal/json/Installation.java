@@ -11,8 +11,6 @@ package org.openhab.binding.verisure.internal.json;
 import java.util.Objects;
 
 /**
- * The {@link Installation} is used to connect to the Verisure services.
- *
  * @author Jonas Gabriel - Initial contribution
  */
 public class Installation {

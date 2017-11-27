@@ -11,8 +11,9 @@ package org.openhab.binding.verisure.internal;
 import org.openhab.binding.verisure.internal.json.InstallationOverview;
 
 /**
- * The {@link InstallationOverviewReceivedListener} is responsible for creating things and thing
- * handlers.
+ * The {@link InstallationOverviewReceivedListener} is used to implement the Observer pattern for all sensors under
+ * an alarm bridge. This way is possible to update the whole system of sensors with a single call to the Verisure
+ * backend
  *
  * @author Jonas Gabriel - Initial contribution
  */

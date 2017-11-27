@@ -28,7 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * The {@link VerisureSession} is used to connect to the Verisure services.
+ * The {@link VerisureSession} is a port of https://github.com/persandstrom/python-verisure
  *
  * @author Jonas Gabriel - Initial contribution
  */

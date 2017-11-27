@@ -28,8 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * The {@link DoorWindowSensorHandler} is responsible for handling commands, which are
- * sent to one of the channels.
+ * The {@link DoorWindowSensorHandler} is responsible for Door/Window sensors
  *
  * @author Jonas Gabriel - Initial contribution
  */

@@ -31,8 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * The {@link SmartPlugHandler} is responsible for handling commands, which are
- * sent to one of the channels.
+ * The {@link SmartPlugHandler} is responsible for handling Smart Plug devices
  *
  * @author Jonas Gabriel - Initial contribution
  */

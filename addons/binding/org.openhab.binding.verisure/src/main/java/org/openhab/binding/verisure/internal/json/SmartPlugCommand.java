@@ -11,8 +11,7 @@ package org.openhab.binding.verisure.internal.json;
 import java.util.Objects;
 
 /**
- * The {@link SmartPlugCommand} is responsible for handling commands, which are
- * sent to one of the channels.
+ * The {@link SmartPlugCommand} is used to update the status of a Smart Plug
  *
  * @author Jonas Gabriel - Initial contribution
  */

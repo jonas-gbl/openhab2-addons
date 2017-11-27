@@ -31,7 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * The {@link VerisureSensorDiscoveryService} is used to connect to the Verisure services.
+ * The {@link VerisureAlarmDiscoveryService} is used to discover alarm bridges for different Verisure installations
  *
  * @author Jonas Gabriel - Initial contribution
  */
@@ -59,27 +59,22 @@ public class VerisureAlarmDiscoveryService extends AbstractDiscoveryService {
             Object property = configProperties.get(BASEURL_PARAM);
             if (property != null) {
                 baseUrl = (String) property;
-                logger.debug("Found baseurl property [{}]", baseUrl);
             }
             property = configProperties.get(USERNAME_PARAM);
             if (property != null) {
                 username = (String) property;
-                logger.debug("Found username property [{}]", username);
             }
             property = configProperties.get(PASSWORD_PARAM);
             if (property != null) {
                 password = (String) property;
-                logger.debug("Found password property [{}]", password);
             }
             property = configProperties.get(PIN_PARAM);
             if (property != null) {
                 pin = (String) property;
-                logger.debug("Found pin property [{}] as [{}]", property, property.getClass().getCanonicalName());
             }
             property = configProperties.get(REFRESH_PARAM);
             if (property != null) {
                 refresh = (String) property;
-                logger.debug("Found refresh property [{}] as [{}]", property, property.getClass().getCanonicalName());
             }
         }
 
@@ -111,7 +106,8 @@ public class VerisureAlarmDiscoveryService extends AbstractDiscoveryService {
 
                 BigDecimal refreshValue;
                 try {
-                    refreshValue = new BigDecimal(refresh);
+                    refreshValue = StringUtils.isNotBlank(refresh) ?
+                            new BigDecimal(refresh) : new BigDecimal(DEFAULT_REFRESH_INTERVAL);
                 } catch (NumberFormatException nfe) {
                     refreshValue = new BigDecimal(DEFAULT_REFRESH_INTERVAL);
                 }
@@ -132,9 +128,11 @@ public class VerisureAlarmDiscoveryService extends AbstractDiscoveryService {
                 verisureSession.logout();
             }
         } catch (IOException e) {
-            logger.debug("Problems discovering alarms", e);
+            String reason = e.getMessage();
+            logger.debug("Failed to retrieve installations [{}]", reason);
         } catch (IllegalStateException iae) {
-            logger.error("The discovery service is mis-configured", iae);
+            String reason = iae.getMessage();
+            logger.error("The discovery service is mis-configured [{}]", reason);
         }
 
     }

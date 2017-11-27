@@ -29,8 +29,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * The {@link ClimateSensorHandler} is responsible for handling commands, which are
- * sent to one of the channels.
+ * The {@link ClimateSensorHandler} is responsible for handling climate sensors
+ *
  *
  * @author Jonas Gabriel - Initial contribution
  */

@@ -11,8 +11,7 @@ package org.openhab.binding.verisure.internal.http;
 import java.util.Objects;
 
 /**
- * The {@link HttpResponse} is responsible for handling commands, which are
- * sent to one of the channels.
+ * The {@link HttpResponse} is a utility class that encapsulates a response code and body.
  *
  * @author Jonas Gabriel - Initial contribution
  */

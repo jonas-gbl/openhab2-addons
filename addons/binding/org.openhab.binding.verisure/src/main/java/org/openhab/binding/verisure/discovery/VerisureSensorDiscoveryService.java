@@ -31,7 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * The {@link VerisureSensorDiscoveryService} is used to connect to the Verisure services.
+ * The {@link VerisureSensorDiscoveryService} is used to discover sensors under a specific alarm bridge.
  *
  * @author Jonas Gabriel - Initial contribution
  */
@@ -78,7 +78,8 @@ public class VerisureSensorDiscoveryService extends AbstractDiscoveryService imp
             processInstallationOverview(installationOverview);
 
         } catch (IOException e) {
-            logger.debug("Failed to retrieve installation overview");
+            String reason = e.getMessage();
+            logger.debug("Failed to retrieve installation overview [{}]", reason);
         }
 
     }
@@ -98,7 +99,7 @@ public class VerisureSensorDiscoveryService extends AbstractDiscoveryService imp
             DiscoveryResult discoveryResult = DiscoveryResultBuilder.create(thingUID)
                     .withProperties(properties)
                     .withBridge(bridgeUID)
-                    .withLabel("Climate sensor "  + deviceLabel + " (" + deviceArea + ")")
+                    .withLabel("Climate sensor " + deviceLabel + " (" + deviceArea + ")")
                     .build();
 
             thingDiscovered(discoveryResult);
@@ -137,7 +138,7 @@ public class VerisureSensorDiscoveryService extends AbstractDiscoveryService imp
             DiscoveryResult discoveryResult = DiscoveryResultBuilder.create(thingUID)
                     .withProperties(properties)
                     .withBridge(bridgeUID)
-                    .withLabel("Smart Plug "  + deviceLabel + " (" + deviceArea + ")")
+                    .withLabel("Smart Plug " + deviceLabel + " (" + deviceArea + ")")
                     .build();
 
             thingDiscovered(discoveryResult);

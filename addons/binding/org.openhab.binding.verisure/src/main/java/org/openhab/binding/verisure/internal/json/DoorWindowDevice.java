@@ -12,8 +12,6 @@ import java.time.OffsetDateTime;
 import java.util.Objects;
 
 /**
- * The {@link DoorWindowDevice} is used to connect to the Verisure services.
- *
  * @author Jonas Gabriel - Initial contribution
  */
 public class DoorWindowDevice {
