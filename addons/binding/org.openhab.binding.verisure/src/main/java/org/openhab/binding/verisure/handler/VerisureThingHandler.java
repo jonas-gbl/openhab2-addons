@@ -23,7 +23,7 @@ import org.openhab.binding.verisure.internal.InstallationOverviewReceivedListene
  */
 public abstract class VerisureThingHandler extends BaseThingHandler implements InstallationOverviewReceivedListener {
 
-    protected static String DEVICE_LABEL_PARAM = "device-label";
+    public static String DEVICE_LABEL_PARAM = "device-label";
 
     protected String deviceLabel;
 

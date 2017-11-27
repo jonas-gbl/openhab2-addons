@@ -27,5 +27,7 @@ Import-Package:
  org.openhab.binding.verisure,
  org.openhab.binding.verisure.handler,
  org.osgi.service.component.annotations;resolution:=optional,
- org.slf4j
+ org.slf4j,
+ org.apache.commons.lang,
+ org.osgi.framework
 Service-Component: OSGI-INF/*.xml
