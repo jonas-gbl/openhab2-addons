@@ -11,15 +11,15 @@ package org.openhab.binding.verisure.internal.json;
 import java.util.Objects;
 
 /**
- * The {@link SmartPlugCommand} is used to update the status of a Smart Plug
+ * The {@link SmartPlugPayload} is used to update the status of a Smart Plug
  *
  * @author Jonas Gabriel - Initial contribution
  */
-public class SmartPlugCommand {
+public class SmartPlugPayload {
     private String deviceLabel;
     private boolean state;
 
-    public SmartPlugCommand(String deviceLabel, boolean state) {
+    public SmartPlugPayload(String deviceLabel, boolean state) {
         this.deviceLabel = deviceLabel;
         this.state = state;
     }
@@ -37,10 +37,10 @@ public class SmartPlugCommand {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof SmartPlugCommand)) {
+        if (!(o instanceof SmartPlugPayload)) {
             return false;
         }
-        SmartPlugCommand that = (SmartPlugCommand) o;
+        SmartPlugPayload that = (SmartPlugPayload) o;
         return state == that.state &&
                 Objects.equals(deviceLabel, that.deviceLabel);
     }

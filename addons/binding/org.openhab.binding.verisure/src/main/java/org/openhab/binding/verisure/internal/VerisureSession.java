@@ -142,9 +142,9 @@ public class VerisureSession {
         headers.put("Cookie", "vid=" + getCookie());
         headers.put("Accept", "application/json,text/javascript, */*; q=0.01");
 
-        ArmCommand armCommand = new ArmCommand(pin, state);
+        ArmPayload armPayload = new ArmPayload(pin, state);
 
-        String json = gson.toJson(Collections.singleton(armCommand));
+        String json = gson.toJson(Collections.singleton(armPayload));
 
         HttpResponse response = HttpUtils.post(verisureUrls.armStateCode(giid), headers, json);
 
@@ -162,9 +162,9 @@ public class VerisureSession {
         headers.put("Accept", "application/json");
         headers.put("Content-Type", "application/json; charset=UTF-8");
 
-        SmartPlugCommand smartPlugCommand = new SmartPlugCommand(deviceLabel, active);
+        SmartPlugPayload smartPlugPayload = new SmartPlugPayload(deviceLabel, active);
 
-        String json = gson.toJson(Collections.singletonList(smartPlugCommand));
+        String json = gson.toJson(Collections.singletonList(smartPlugPayload));
 
         logger.debug("Sending SmartplugCommand json={}", json);
 

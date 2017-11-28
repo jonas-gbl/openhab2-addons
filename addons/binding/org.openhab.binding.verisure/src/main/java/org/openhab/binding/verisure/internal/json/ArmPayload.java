@@ -11,15 +11,15 @@ package org.openhab.binding.verisure.internal.json;
 import java.util.Objects;
 
 /**
- * The {@link ArmCommand} is used to update the state of the alarm
+ * The {@link ArmPayload} is used to update the state of the alarm
  *
  * @author Jonas Gabriel - Initial contribution
  */
-public class ArmCommand {
+public class ArmPayload {
     private String code;
     private ArmStatus state;
 
-    public ArmCommand(String code, ArmStatus state) {
+    public ArmPayload(String code, ArmStatus state) {
         this.code = code;
         this.state = state;
     }
@@ -37,10 +37,10 @@ public class ArmCommand {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof ArmCommand)) {
+        if (!(o instanceof ArmPayload)) {
             return false;
         }
-        ArmCommand that = (ArmCommand) o;
+        ArmPayload that = (ArmPayload) o;
         return Objects.equals(code, that.code) &&
                 state == that.state;
     }
