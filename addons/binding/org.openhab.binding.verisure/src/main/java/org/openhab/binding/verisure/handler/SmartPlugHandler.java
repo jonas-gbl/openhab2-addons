@@ -96,9 +96,9 @@ public class SmartPlugHandler extends VerisureThingHandler {
 
 
         channelUID = new ChannelUID(getThing().getUID(), LOCATION_CHANNEL);
-        if (smartPlug.getArea() != null) {
-            String sensorArea = smartPlug.getArea();
-            StringType location = new StringType(sensorArea);
+        String smartPlugArea = smartPlug.getArea();
+        if (smartPlugArea != null) {
+            StringType location = new StringType(smartPlugArea);
             updateState(channelUID, location);
         } else {
             updateState(channelUID, UnDefType.UNDEF);

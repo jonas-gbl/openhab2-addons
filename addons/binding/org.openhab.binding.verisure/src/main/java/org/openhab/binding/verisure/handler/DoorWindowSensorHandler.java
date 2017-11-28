@@ -8,11 +8,14 @@
  */
 package org.openhab.binding.verisure.handler;
 
-import java.time.format.DateTimeFormatter;
+import java.time.OffsetDateTime;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Optional;
 
 import static org.openhab.binding.verisure.VerisureBindingConstants.*;
 
+import org.eclipse.smarthome.core.library.types.DateTimeType;
 import org.eclipse.smarthome.core.library.types.OpenClosedType;
 import org.eclipse.smarthome.core.library.types.StringType;
 import org.eclipse.smarthome.core.thing.ChannelUID;
@@ -76,16 +79,20 @@ public class DoorWindowSensorHandler extends VerisureThingHandler {
         }
 
         channelUID = new ChannelUID(getThing().getUID(), LAST_UPDATE_CHANNEL);
-        if (doorWindowDevice.getReportTime() != null) {
-            StringType timestamp = new StringType(doorWindowDevice.getReportTime().format(DateTimeFormatter.ISO_OFFSET_TIME));
+        OffsetDateTime reportTime = doorWindowDevice.getReportTime();
+        if (reportTime != null) {
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(Date.from(reportTime.toInstant()));
+            DateTimeType timestamp = new DateTimeType(calendar);
+            updateState(channelUID, timestamp);
             updateState(channelUID, timestamp);
         } else {
             updateState(channelUID, UnDefType.UNDEF);
         }
 
         channelUID = new ChannelUID(getThing().getUID(), LOCATION_CHANNEL);
-        if (doorWindowDevice.getArea() != null) {
-            String sensorArea = doorWindowDevice.getArea();
+        String sensorArea = doorWindowDevice.getArea();
+        if (sensorArea != null) {
             StringType location = new StringType(sensorArea);
             updateState(channelUID, location);
         } else {

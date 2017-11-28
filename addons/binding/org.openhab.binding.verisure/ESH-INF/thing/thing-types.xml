@@ -141,7 +141,7 @@
     </channel-type>
 
     <channel-type id="last-update-channel">
-        <item-type>String</item-type>
+        <item-type>DateTime</item-type>
         <label>Last Update</label>
         <description>Timestamp of last update</description>
         <state readOnly="true"/>
@@ -150,7 +150,7 @@
     <channel-type id="location-channel">
         <item-type>String</item-type>
         <label>Location</label>
-        <description>location</description>
+        <description>Location of sensor</description>
         <state readOnly="true"/>
     </channel-type>
 
