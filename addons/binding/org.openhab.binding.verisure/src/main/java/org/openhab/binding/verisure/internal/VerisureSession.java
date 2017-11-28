@@ -23,6 +23,7 @@ import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.jetty.util.B64Code;
+import org.openhab.binding.verisure.ArmStatus;
 import org.openhab.binding.verisure.internal.http.HttpResponse;
 import org.openhab.binding.verisure.internal.http.HttpUtils;
 import org.openhab.binding.verisure.internal.json.*;

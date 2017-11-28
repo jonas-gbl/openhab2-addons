@@ -10,6 +10,8 @@ package org.openhab.binding.verisure.internal.json;
 
 import java.util.Objects;
 
+import org.openhab.binding.verisure.ArmStatus;
+
 /**
  * The {@link ArmPayload} is used to update the state of the alarm
  *

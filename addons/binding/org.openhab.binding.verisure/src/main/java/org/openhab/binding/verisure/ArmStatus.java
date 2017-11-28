@@ -6,7 +6,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package org.openhab.binding.verisure.internal.json;
+package org.openhab.binding.verisure;
 
 /**
  * @author Jonas Gabriel - Initial contribution

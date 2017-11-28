@@ -28,11 +28,12 @@ import org.eclipse.smarthome.core.thing.ThingStatusDetail;
 import org.eclipse.smarthome.core.thing.binding.BaseBridgeHandler;
 import org.eclipse.smarthome.core.types.Command;
 import org.eclipse.smarthome.core.types.RefreshType;
+import org.openhab.binding.verisure.ArmCommand;
+import org.openhab.binding.verisure.ArmStatus;
 import org.openhab.binding.verisure.internal.InstallationOverviewReceivedListener;
 import org.openhab.binding.verisure.internal.VerisureSession;
 import org.openhab.binding.verisure.internal.VerisureUrls;
 import org.openhab.binding.verisure.internal.json.ArmState;
-import org.openhab.binding.verisure.internal.json.ArmStatus;
 import org.openhab.binding.verisure.internal.json.InstallationOverview;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,6 +59,9 @@ public class AlarmBridgeHandler extends BaseBridgeHandler {
 
 
     private String giid;
+    private String baseUrl;
+    private String username;
+    private String password;
     private String pin;
     private boolean allowStateUpdate = false;
     private BigDecimal refresh;
@@ -83,12 +87,13 @@ public class AlarmBridgeHandler extends BaseBridgeHandler {
             logger.debug("Initializing AlarmBridgeHandler.");
 
             Configuration config = getThing().getConfiguration();
-            String baseUrl = (String) config.get(BASEURL_PARAM);
+            baseUrl = (String) config.get(BASEURL_PARAM);
             giid = (String) config.get(GIID_PARAM);
-            String username = (String) config.get(USERNAME_PARAM);
-            String password = (String) config.get(PASSWORD_PARAM);
-            refresh = (BigDecimal) config.get(REFRESH_PARAM);
+            username = (String) config.get(USERNAME_PARAM);
+            password = (String) config.get(PASSWORD_PARAM);
             pin = (String) config.get(PIN_PARAM);
+
+            refresh = (BigDecimal) config.get(REFRESH_PARAM);
 
             Preconditions.checkState(StringUtils.isNotEmpty(baseUrl), "base URL is empty");
             Preconditions.checkState(StringUtils.isNotEmpty(giid), "GIID misconfigured");
@@ -122,6 +127,32 @@ public class AlarmBridgeHandler extends BaseBridgeHandler {
             scheduler.schedule(this::updateAlarmArmState, 1, TimeUnit.SECONDS);
         } else if (command instanceof RefreshType) {
             logger.debug("Scheduling one time update after receiving refresh command [{}]", command);
+            scheduler.schedule(this::updateAlarmArmState, 1, TimeUnit.SECONDS);
+        } else if (command instanceof ArmCommand) {
+            ArmCommand receivedCommand = (ArmCommand) command;
+
+            ArmStatus status = receivedCommand.getStatus();
+
+            String receivedCommandUsername = receivedCommand.getUsername();
+            receivedCommandUsername = receivedCommandUsername == null ? this.username : receivedCommandUsername;
+
+            String receivedCommandPassword = receivedCommand.getPassword();
+            receivedCommandPassword = receivedCommandPassword == null ? this.password : receivedCommandPassword;
+
+            String receivedCommandPin = receivedCommand.getPin();
+            receivedCommandPin = receivedCommandPin == null ? this.pin : receivedCommandPin;
+
+
+            try {
+                VerisureSession armSession = new VerisureSession(VerisureUrls.withBaseUrl(baseUrl),
+                                                                 receivedCommandUsername, receivedCommandPassword);
+                armSession.login();
+                armSession.setArmState(this.giid, receivedCommandPin, status);
+                armSession.logout();
+            } catch (IOException e) {
+                logger.debug("Failed to update arm state for command [{}]", receivedCommand);
+            }
+            logger.debug("Scheduling one time update after receiving update command [{}]", command);
             scheduler.schedule(this::updateAlarmArmState, 1, TimeUnit.SECONDS);
         }
     }

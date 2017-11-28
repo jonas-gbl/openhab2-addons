@@ -11,6 +11,8 @@ package org.openhab.binding.verisure.internal.json;
 import java.time.OffsetDateTime;
 import java.util.Objects;
 
+import org.openhab.binding.verisure.ArmStatus;
+
 /**
  * @author Jonas Gabriel - Initial contribution
  */
