@@ -56,7 +56,7 @@ public class AlarmBridgeHandler extends BaseBridgeHandler {
     public static final String REFRESH_PARAM = "refresh";
     public static final String BASEURL_PARAM = "baseurl";
     public static final String PIN_PARAM = "pin";
-    private static final Pattern burstPattern = Pattern.compile("burst-([0-9]+)-([0-9]+)");
+    private static final Pattern burstPattern = Pattern.compile("burst-([1-9][0-9]*)-([1-9][0-9]{2,})");
     private static final Pattern setArmStatePattern = Pattern.compile("(DISARMED|ARMED_HOME|ARMED_AWAY)(?:_([0-9]{4}))?");
 
     private final Logger logger = LoggerFactory.getLogger(AlarmBridgeHandler.class);
