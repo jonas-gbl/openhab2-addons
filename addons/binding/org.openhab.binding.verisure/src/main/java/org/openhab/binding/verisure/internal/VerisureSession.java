@@ -147,7 +147,6 @@ public class VerisureSession {
         ArmPayload armPayload = new ArmPayload(pin, state);
 
         String json = gson.toJson(armPayload);
-        logger.debug("Sending arm payload {}", json);
 
         HttpResponse response = HttpUtils.put(verisureUrls.armStateCode(giid), headers, json);
 

@@ -10,7 +10,6 @@ package org.openhab.binding.verisure.handler;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.Arrays;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ScheduledFuture;
@@ -58,6 +57,7 @@ public class AlarmBridgeHandler extends BaseBridgeHandler {
     public static final String BASEURL_PARAM = "baseurl";
     public static final String PIN_PARAM = "pin";
     private static final Pattern burstPattern = Pattern.compile("burst-([0-9]+)-([0-9]+)");
+    private static final Pattern setArmStatePattern = Pattern.compile("(DISARMED|ARMED_HOME|ARMED_AWAY)(?:_([0-9]{4}))?");
 
     private final Logger logger = LoggerFactory.getLogger(AlarmBridgeHandler.class);
     private final CopyOnWriteArrayList<InstallationOverviewReceivedListener> installationOverviewReceivedListeners = new CopyOnWriteArrayList<>();
@@ -127,12 +127,16 @@ public class AlarmBridgeHandler extends BaseBridgeHandler {
         logger.debug("Received command [{}] of type [{}]", command, command.getClass().getCanonicalName());
 
         if (isArmStateCommand(channelUID, command)) {
-            StringType receivedCommand = (StringType) command;
-            if (allowStateUpdate) {
-                logger.debug("Requested arm state is [{}]", receivedCommand);
-                ArmStatus requestedState = ArmStatus.retrieveById(receivedCommand.toString());
-                this.setArmState(requestedState);
+
+            String payload = command.toFullString();
+            Matcher burstMatcher = setArmStatePattern.matcher(payload);
+            if (burstMatcher.matches()) {
+                ArmStatus requestedState = ArmStatus.retrieveById(burstMatcher.group(1));
+                String receivedPin = burstMatcher.group(2);
+                receivedPin = receivedPin != null ? receivedPin : this.pin;
+                this.setArmState(requestedState, receivedPin);
             }
+
             logger.debug("Scheduling one time update after receiving update command [{}]", command);
             scheduler.schedule(this::updateAlarmArmState, 1, TimeUnit.SECONDS);
         } else if (command instanceof RefreshType) {
@@ -243,7 +247,7 @@ public class AlarmBridgeHandler extends BaseBridgeHandler {
     }
 
 
-    private synchronized void setArmState(ArmStatus requestedState) {
+    private synchronized void setArmState(ArmStatus requestedState, String pin) {
         try {
             if (verisureSession.isLoggedIn() || verisureSession.login()) {
                 ArmStatus updatedState = verisureSession.setArmState(giid, pin, requestedState);
@@ -290,9 +294,9 @@ public class AlarmBridgeHandler extends BaseBridgeHandler {
         boolean result = false;
         if (command instanceof StringType) {
             String payload = command.toFullString();
-            result = Arrays.stream(ArmStatus.values())
-                    .map(armStatus -> armStatus.id)
-                    .anyMatch(payload::equals);
+
+            Matcher burstMatcher = setArmStatePattern.matcher(payload);
+            result = burstMatcher.matches();
         }
 
         result &= channelUID.getId().equals(ALARM_STATUS_CHANNEL);
