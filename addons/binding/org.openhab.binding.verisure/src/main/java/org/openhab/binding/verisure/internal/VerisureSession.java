@@ -27,6 +27,7 @@ import org.openhab.binding.verisure.ArmStatus;
 import org.openhab.binding.verisure.internal.http.HttpResponse;
 import org.openhab.binding.verisure.internal.http.HttpUtils;
 import org.openhab.binding.verisure.internal.json.*;
+import org.openhab.binding.verisure.internal.json.Error;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -150,14 +151,28 @@ public class VerisureSession {
 
         HttpResponse response = HttpUtils.put(verisureUrls.armStateCode(giid), headers, json);
 
-        if (response.getStatus() != 200) {
+        if (response.getStatus() == 200) {
+            logger.debug("Set arm state for giid [{}] succeeded. Response status was [{}]. Actual response was [{}]"
+                    , giid, response.getStatus(), response.getBody());
+
+
+            throw new IOException("Could not retrieve arm state for gid [" + giid + "]. Response status was [" + response.getStatus() + "]");
+        } else if (response.getStatus() == 400) {
+
+            Error error = gson.fromJson(response.getBody(), Error.class);
+            String errorCode = error.getErrorCode();
+            if (errorCode.equalsIgnoreCase("VAL_00818")) {
+                logger.debug("Alarm state is already set to [{}]", state);
+            } else {
+                logger.debug("Failed to set arm state for giid [{}]. Response status was [{}]. Actual response was [{}]"
+                        , giid, response.getStatus(), response.getBody());
+                handleErrorResponse(response);
+            }
+
+        } else {
             logger.debug("Failed to set arm state for giid [{}]. Response status was [{}]. Actual response was [{}]"
                     , giid, response.getStatus(), response.getBody());
             handleErrorResponse(response);
-            throw new IOException("Could not retrieve arm state for gid [" + giid + "]. Response status was [" + response.getStatus() + "]");
-        } else {
-            logger.debug("Set arm state for giid [{}] succeeded. Response status was [{}]. Actual response was [{}]"
-                    , giid, response.getStatus(), response.getBody());
         }
         return getArmState(giid);
     }
