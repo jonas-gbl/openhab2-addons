@@ -257,7 +257,7 @@ public class AlarmBridgeHandler extends BaseBridgeHandler {
                 updateState(channelUID, state);
             }
         } catch (IOException ioe) {
-            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.OFFLINE.CONFIGURATION_ERROR, ioe.getMessage());
+            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.OFFLINE.COMMUNICATION_ERROR, ioe.getMessage());
         }
     }
 
