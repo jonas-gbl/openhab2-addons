@@ -1,0 +1,7 @@
+rule "Check Burst Mode"
+	when
+		Item verisure_smart_plug_verisure_11942690918_2alf_vl3m_on_off_channel changed
+	then
+        verisure_verisure_alarm_verisure_11942690918_alarm_status_channel.sendCommand("burst-5-1000")
+end
+

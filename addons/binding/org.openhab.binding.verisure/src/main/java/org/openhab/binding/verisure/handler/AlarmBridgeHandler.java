@@ -10,10 +10,13 @@ package org.openhab.binding.verisure.handler;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.openhab.binding.verisure.VerisureBindingConstants.ALARM_STATUS_CHANNEL;
 
@@ -30,6 +33,7 @@ import org.eclipse.smarthome.core.types.Command;
 import org.eclipse.smarthome.core.types.RefreshType;
 import org.openhab.binding.verisure.ArmCommand;
 import org.openhab.binding.verisure.ArmStatus;
+import org.openhab.binding.verisure.BurstCommand;
 import org.openhab.binding.verisure.internal.InstallationOverviewReceivedListener;
 import org.openhab.binding.verisure.internal.VerisureSession;
 import org.openhab.binding.verisure.internal.VerisureUrls;
@@ -53,6 +57,7 @@ public class AlarmBridgeHandler extends BaseBridgeHandler {
     public static final String REFRESH_PARAM = "refresh";
     public static final String BASEURL_PARAM = "baseurl";
     public static final String PIN_PARAM = "pin";
+    private static final Pattern burstPattern = Pattern.compile("burst-([0-9]+)-([0-9]+)");
 
     private final Logger logger = LoggerFactory.getLogger(AlarmBridgeHandler.class);
     private final CopyOnWriteArrayList<InstallationOverviewReceivedListener> installationOverviewReceivedListeners = new CopyOnWriteArrayList<>();
@@ -67,7 +72,9 @@ public class AlarmBridgeHandler extends BaseBridgeHandler {
     private BigDecimal refresh;
 
     private VerisureSession verisureSession;
-    private ScheduledFuture<?> refreshJob, loginJob;
+    private ScheduledFuture<?> refreshJob, loginJob, burstJob;
+    private long burstCounter;
+    private long burstRounds;
 
     public AlarmBridgeHandler(Bridge bridge) {
         super(bridge);
@@ -116,7 +123,10 @@ public class AlarmBridgeHandler extends BaseBridgeHandler {
 
     @Override
     public void handleCommand(ChannelUID channelUID, Command command) {
-        if (channelUID.getId().equals(ALARM_STATUS_CHANNEL) && command instanceof StringType) {
+
+        logger.debug("Received command [{}] of type [{}]", command, command.getClass().getCanonicalName());
+
+        if (isArmStateCommand(channelUID, command)) {
             StringType receivedCommand = (StringType) command;
             if (allowStateUpdate) {
                 logger.debug("Requested arm state is [{}]", receivedCommand);
@@ -154,13 +164,41 @@ public class AlarmBridgeHandler extends BaseBridgeHandler {
             }
             logger.debug("Scheduling one time update after receiving update command [{}]", command);
             scheduler.schedule(this::updateAlarmArmState, 1, TimeUnit.SECONDS);
+        } else if (command instanceof BurstCommand) {
+            BurstCommand receivedCommand = (BurstCommand) command;
+            this.activateBurstMode(receivedCommand);
+        } else if (isBurstCommand(channelUID, command)) {
+            String payload = command.toFullString();
+            Matcher burstMatcher = burstPattern.matcher(payload);
+            if (burstMatcher.matches()) {
+                long count = Long.parseLong(burstMatcher.group(1));
+                long intervalInMilliseconds = Long.parseLong(burstMatcher.group(2));
+
+                BurstCommand burstCommand = new BurstCommand(count, intervalInMilliseconds);
+                this.activateBurstMode(burstCommand);
+            }
         }
     }
 
+    public void registerInstallationOverviewReceivedListener(InstallationOverviewReceivedListener listener) {
+        this.installationOverviewReceivedListeners.add(listener);
+        logger.debug("Scheduling one time update after registration of listener");
+        scheduler.schedule(this::updateAlarmArmState, 1, TimeUnit.SECONDS);
+    }
 
-    private void startAutomaticRefresh() {
-        refreshJob = scheduler.scheduleWithFixedDelay(this::updateAlarmArmState, 0, refresh.intValue(), TimeUnit.SECONDS);
-        loginJob = scheduler.scheduleWithFixedDelay(this::updateVerisureCookie, 1, 12, TimeUnit.HOURS);
+    public void unregisterInstallationOverviewReceivedListener(InstallationOverviewReceivedListener listener) {
+        this.installationOverviewReceivedListeners.remove(listener);
+    }
+
+    @Override
+    public void dispose() {
+        refreshJob.cancel(true);
+        loginJob.cancel(true);
+        try {
+            verisureSession.logout();
+        } catch (IOException e) {
+            logger.debug("Failed to logout", e);
+        }
     }
 
     public synchronized void updateAlarmArmState() {
@@ -186,20 +224,24 @@ public class AlarmBridgeHandler extends BaseBridgeHandler {
         }
     }
 
-    public void registerInstallationOverviewReceivedListener(InstallationOverviewReceivedListener listener) {
-        this.installationOverviewReceivedListeners.add(listener);
-        logger.debug("Scheduling one time update after registration of listener");
-        scheduler.schedule(this::updateAlarmArmState, 1, TimeUnit.SECONDS);
+    private synchronized void activateBurstMode(BurstCommand command) {
+        if (this.burstJob == null || this.burstJob.isCancelled()) {
+            long count = command.getCount();
+            long millisecondInterval = command.getIntervalInMilliseconds();
+
+            logger.debug("Performing a burst of {} rounds {} msecs apart", count, millisecondInterval);
+
+            this.burstCounter = 0;
+            this.burstRounds = count;
+            this.burstJob = scheduler.scheduleWithFixedDelay(this::burstMode, 0, millisecondInterval, TimeUnit.MILLISECONDS);
+        }
     }
 
-    public void unregisterInstallationOverviewReceivedListener(InstallationOverviewReceivedListener listener) {
-        this.installationOverviewReceivedListeners.remove(listener);
+    private void startAutomaticRefresh() {
+        refreshJob = scheduler.scheduleWithFixedDelay(this::updateAlarmArmState, 0, refresh.intValue(), TimeUnit.SECONDS);
+        loginJob = scheduler.scheduleWithFixedDelay(this::updateVerisureCookie, 1, 12, TimeUnit.HOURS);
     }
 
-    private void notifyInstallationOverviewReceivedListeners(InstallationOverview installationOverview) {
-        logger.debug("Notifying [{}] listener(s)", installationOverviewReceivedListeners.size());
-        this.installationOverviewReceivedListeners.forEach(listener -> listener.onInstallationOverviewReceived(installationOverview));
-    }
 
     private synchronized void setArmState(ArmStatus requestedState) {
         try {
@@ -215,6 +257,22 @@ public class AlarmBridgeHandler extends BaseBridgeHandler {
         }
     }
 
+    private synchronized void burstMode() {
+        burstCounter++;
+        if (burstCounter <= burstRounds) {
+            logger.debug("Burst mode: Round {}", burstCounter);
+            this.updateAlarmArmState();
+        } else {
+            logger.debug("Burst mode: Finished");
+            this.burstJob.cancel(true);
+        }
+    }
+
+    private void notifyInstallationOverviewReceivedListeners(InstallationOverview installationOverview) {
+        logger.debug("Notifying [{}] listener(s)", installationOverviewReceivedListeners.size());
+        this.installationOverviewReceivedListeners.forEach(listener -> listener.onInstallationOverviewReceived(installationOverview));
+    }
+
     private synchronized void updateVerisureCookie() {
         try {
             verisureSession.login();
@@ -223,14 +281,33 @@ public class AlarmBridgeHandler extends BaseBridgeHandler {
         }
     }
 
-    @Override
-    public void dispose() {
-        refreshJob.cancel(true);
-        loginJob.cancel(true);
-        try {
-            verisureSession.logout();
-        } catch (IOException e) {
-            logger.debug("Failed to logout", e);
+
+    private boolean isArmStateCommand(ChannelUID channelUID, Command command) {
+
+        boolean result = false;
+        if (command instanceof StringType) {
+            String payload = command.toFullString();
+            result = Arrays.stream(ArmStatus.values())
+                    .map(armStatus -> armStatus.id)
+                    .anyMatch(payload::equals);
         }
+
+        result &= channelUID.getId().equals(ALARM_STATUS_CHANNEL);
+
+        return result;
+    }
+
+    private boolean isBurstCommand(ChannelUID channelUID, Command command) {
+
+        boolean result = false;
+        if (command instanceof StringType) {
+            String payload = command.toFullString();
+
+            Matcher burstMatcher = burstPattern.matcher(payload);
+            result = burstMatcher.matches();
+        }
+
+        result &= channelUID.getId().equals(ALARM_STATUS_CHANNEL);
+        return result;
     }
 }
