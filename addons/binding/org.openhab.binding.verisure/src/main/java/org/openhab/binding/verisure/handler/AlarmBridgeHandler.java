@@ -270,7 +270,10 @@ public class AlarmBridgeHandler extends BaseBridgeHandler {
 
     private void notifyInstallationOverviewReceivedListeners(InstallationOverview installationOverview) {
         logger.debug("Notifying [{}] listener(s)", installationOverviewReceivedListeners.size());
-        this.installationOverviewReceivedListeners.forEach(listener -> listener.onInstallationOverviewReceived(installationOverview));
+        this.installationOverviewReceivedListeners.forEach(listener -> {
+            logger.debug("Notifying [{}]", listener.getClass().getCanonicalName());
+            listener.onInstallationOverviewReceived(installationOverview);
+        });
     }
 
     private synchronized void updateVerisureCookie() {

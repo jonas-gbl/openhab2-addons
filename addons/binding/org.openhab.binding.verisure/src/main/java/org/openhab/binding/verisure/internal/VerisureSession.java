@@ -142,17 +142,23 @@ public class VerisureSession {
         Map<String, String> headers = new HashMap<>();
         headers.put("Cookie", "vid=" + getCookie());
         headers.put("Accept", "application/json,text/javascript, */*; q=0.01");
+        headers.put("Content-Type", "application/json; charset=UTF-8");
 
         ArmPayload armPayload = new ArmPayload(pin, state);
 
-        String json = gson.toJson(Collections.singleton(armPayload));
+        String json = gson.toJson(armPayload);
+        logger.debug("Sending arm payload {}", json);
 
-        HttpResponse response = HttpUtils.post(verisureUrls.armStateCode(giid), headers, json);
+        HttpResponse response = HttpUtils.put(verisureUrls.armStateCode(giid), headers, json);
 
         if (response.getStatus() != 200) {
-            logger.debug("Failed to retrieve arm state for giid [{}]. Response status was [{}]", giid, response.getStatus());
+            logger.debug("Failed to set arm state for giid [{}]. Response status was [{}]. Actual response was [{}]"
+                    , giid, response.getStatus(), response.getBody());
             handleErrorResponse(response);
             throw new IOException("Could not retrieve arm state for gid [" + giid + "]. Response status was [" + response.getStatus() + "]");
+        } else {
+            logger.debug("Set arm state for giid [{}] succeeded. Response status was [{}]. Actual response was [{}]"
+                    , giid, response.getStatus(), response.getBody());
         }
         return getArmState(giid);
     }

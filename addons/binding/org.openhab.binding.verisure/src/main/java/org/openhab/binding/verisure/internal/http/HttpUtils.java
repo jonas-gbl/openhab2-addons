@@ -19,6 +19,29 @@ import java.util.Map;
  * @author Jonas Gabriel - Initial contribution
  */
 public class HttpUtils {
+
+    public static HttpResponse put(URL url, Map<String, String> headers, String data) throws IOException {
+
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        connection.setRequestMethod("PUT");
+
+        if (headers != null) {
+            for (Map.Entry<String, String> entry : headers.entrySet()) {
+                connection.setRequestProperty(entry.getKey(), entry.getValue());
+            }
+        }
+
+        if (data != null && !data.isEmpty()) {
+            connection.setDoOutput(true);
+        }
+
+
+        writeRequestData(data, connection);
+
+        connection.disconnect();
+        return retrieveResponse(connection);
+    }
+
     public static HttpResponse post(URL url, Map<String, String> headers, String data) throws IOException {
 
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -35,6 +58,13 @@ public class HttpUtils {
         }
 
 
+        writeRequestData(data, connection);
+
+        connection.disconnect();
+        return retrieveResponse(connection);
+    }
+
+    private static void writeRequestData(String data, HttpURLConnection connection) throws IOException {
         if (data != null && !data.isEmpty()) {
             OutputStream out = null;
             try {
@@ -47,9 +77,6 @@ public class HttpUtils {
                 }
             }
         }
-
-        connection.disconnect();
-        return retrieveResponse(connection);
     }
 
     public static HttpResponse get(URL url, Map<String, String> headers) throws IOException {
