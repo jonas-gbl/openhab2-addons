@@ -8,10 +8,13 @@
  */
 package org.openhab.binding.verisure.internal;
 
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLEncoder;
 
 import com.google.common.base.Preconditions;
+import org.openhab.binding.verisure.LockStatus;
 
 /**
  * The {@link VerisureUrls} is a small utility class for generating URLs to the Verisure backend.
@@ -83,7 +86,7 @@ public class VerisureUrls {
             String path = basePath + "/installation/" + giid + "/" + "smartplug/state";
             return new URL(protocol, host, port, path);
         } catch (MalformedURLException e) {
-            throw new IllegalStateException("armState URL is misconfigured");
+            throw new IllegalStateException("smartPlug URL is misconfigured");
         }
     }
 
@@ -92,7 +95,18 @@ public class VerisureUrls {
             String path = basePath + "/installation/" + giid + "/" + "overview";
             return new URL(protocol, host, port, path);
         } catch (MalformedURLException e) {
-            throw new IllegalStateException("armState URL is misconfigured");
+            throw new IllegalStateException("overview URL is misconfigured");
+        }
+    }
+
+    public URL doorLock(String giid, String deviceLabel, LockStatus lockStatus) {
+        try {
+            String path = basePath + "/installation/" + giid + "/device/" + deviceLabel
+                    + "/" + (lockStatus == LockStatus.LOCKED ? "lock" : "unlock");
+            URLEncoder.encode(path, "UTF-8");
+            return new URL(protocol, host, port, path);
+        } catch (MalformedURLException | UnsupportedEncodingException e) {
+            throw new IllegalStateException("doorLock URL is misconfigured");
         }
     }
 

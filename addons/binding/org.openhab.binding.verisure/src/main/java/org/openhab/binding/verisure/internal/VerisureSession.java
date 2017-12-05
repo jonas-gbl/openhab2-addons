@@ -24,6 +24,7 @@ import com.google.gson.reflect.TypeToken;
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.jetty.util.B64Code;
 import org.openhab.binding.verisure.ArmStatus;
+import org.openhab.binding.verisure.LockStatus;
 import org.openhab.binding.verisure.internal.http.HttpResponse;
 import org.openhab.binding.verisure.internal.http.HttpUtils;
 import org.openhab.binding.verisure.internal.json.*;
@@ -179,7 +180,7 @@ public class VerisureSession {
         return getArmState(giid);
     }
 
-    public void setSmartPlug(String giid, String deviceLabel, boolean active) throws IOException {
+    public boolean setSmartPlug(String giid, String deviceLabel, boolean active) throws IOException {
         Map<String, String> headers = new HashMap<>();
         headers.put("Cookie", "vid=" + getCookie());
         headers.put("Accept", "application/json");
@@ -202,6 +203,48 @@ public class VerisureSession {
         }
         logger.debug("Successfully set Smart Plug [{}] on giid [{}] to state [{}]",
                      deviceLabel, giid, active);
+        return active;
+    }
+
+    public LockStatus setDoorLock(String giid, String deviceLabel, String pin, LockStatus lockStatus) throws IOException {
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Cookie", "vid=" + getCookie());
+        headers.put("Accept", "application/json");
+        headers.put("Content-Type", "application/json; charset=UTF-8");
+
+        DoorLockPayload doorLockPayload = new DoorLockPayload(pin);
+
+        String json = gson.toJson(doorLockPayload);
+
+        HttpResponse response = HttpUtils.put(verisureUrls.doorLock(giid, deviceLabel, lockStatus), headers, json);
+        int responseStatus = response.getStatus();
+        String body = response.getBody();
+
+        if (response.getStatus() == 200) {
+            logger.debug("Successfully set Smart Plug [{}] on giid [{}] to state [{}]",
+                         deviceLabel, giid, lockStatus);
+        } else if (response.getStatus() == 400) {
+            Error error = gson.fromJson(response.getBody(), Error.class);
+            String errorCode = error != null ? error.getErrorCode() : "";
+            if (errorCode.equalsIgnoreCase("VAL_00819")) {
+                logger.debug("Lock is already [{}]", lockStatus);
+            } else {
+                logger.debug("Failed to set lock [{}] on giid [{}] to state [{}]. Response status was [{}]. Response body was [{}]",
+                             deviceLabel, giid, lockStatus,
+                             responseStatus, body);
+                handleErrorResponse(response);
+                throw new IOException(
+                        "Could not set lock to [" + lockStatus + "] for gid [" + giid + "]. Response status was [" + response.getStatus() + "]");
+            }
+
+        } else {
+            logger.debug("Failed to set arm state for giid [{}]. Response status was [{}]. Actual response was [{}]"
+                    , giid, response.getStatus(), response.getBody());
+            handleErrorResponse(response);
+            throw new IOException("Could not set arm state for gid [" + giid + "]. Response status was [" + response.getStatus() + "]");
+        }
+
+        return lockStatus;
     }
 
     public List<Installation> retrieveInstallations() throws IOException {

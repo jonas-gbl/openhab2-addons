@@ -125,13 +125,14 @@ public class HttpUtils {
     private static String getInputStreamAsString(InputStream in) throws IOException {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         try {
+            if (in != null) {
+                in = new BufferedInputStream(in);
 
-            in = new BufferedInputStream(in);
-
-            byte[] buff = new byte[1024];
-            int n;
-            while ((n = in.read(buff)) > 0) {
-                bos.write(buff, 0, n);
+                byte[] buff = new byte[1024];
+                int n;
+                while ((n = in.read(buff)) > 0) {
+                    bos.write(buff, 0, n);
+                }
             }
         } finally {
             bos.flush();

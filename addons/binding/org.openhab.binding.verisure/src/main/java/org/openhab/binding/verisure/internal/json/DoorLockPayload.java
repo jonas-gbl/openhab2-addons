@@ -15,28 +15,23 @@ import java.util.Objects;
  *
  * @author Jonas Gabriel - Initial contribution
  */
-public class SmartPlugPayload {
-    private String deviceLabel;
-    private boolean state;
+public class DoorLockPayload {
 
-    public SmartPlugPayload(String deviceLabel, boolean state) {
-        this.deviceLabel = deviceLabel;
-        this.state = state;
+    private String code;
+
+
+    public DoorLockPayload(String code) {
+        this.code = code;
     }
 
-    public String getDeviceLabel() {
-        return deviceLabel;
-    }
-
-    public boolean isState() {
-        return state;
+    public String getCode() {
+        return code;
     }
 
     @Override
     public String toString() {
         return com.google.common.base.Objects.toStringHelper(this)
-                .add("deviceLabel", deviceLabel)
-                .add("state", state)
+                .add("code", code)
                 .toString();
     }
 
@@ -45,16 +40,15 @@ public class SmartPlugPayload {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof SmartPlugPayload)) {
+        if (!(o instanceof DoorLockPayload)) {
             return false;
         }
-        SmartPlugPayload that = (SmartPlugPayload) o;
-        return state == that.state &&
-                Objects.equals(deviceLabel, that.deviceLabel);
+        DoorLockPayload that = (DoorLockPayload) o;
+        return Objects.equals(code, that.code);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(deviceLabel, state);
+        return Objects.hash(code);
     }
 }
