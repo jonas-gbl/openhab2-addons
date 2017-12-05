@@ -65,7 +65,8 @@ public class VerisureSession {
 
         HttpResponse response = HttpUtils.post(verisureUrls.login(), headers, null);
         String responseBody = response.getBody();
-        if (response.getStatus() == 200) {
+        int responseStatus = response.getStatus();
+        if (responseStatus == 200) {
             try {
                 cookieInfo = gson.fromJson(responseBody, CookieInfo.class);
             } catch (JsonSyntaxException | IllegalArgumentException exception) {
@@ -80,9 +81,9 @@ public class VerisureSession {
                 setCookie(cookieInfo.getCookie());
             }
         } else {
-            logger.debug("Failed to login. Response status was [{}]", response.getStatus());
+            logger.debug("Failed to login. Response status was [{}]. Actual Response was [{}]", responseStatus, responseBody);
             handleErrorResponse(response);
-            throw new IOException("Failed to login. Response status was [" + response.getStatus() + "]");
+            throw new IOException("Failed to login. Response status was [" + responseStatus + "]");
         }
 
         return isLoggedIn();
@@ -101,7 +102,10 @@ public class VerisureSession {
         boolean success;
         try {
             HttpResponse response = HttpUtils.delete(verisureUrls.login(), headers);
-            success = (response.getStatus() == 200);
+            int responseStatus = response.getStatus();
+            String responseBody = response.getBody();
+            logger.debug("Logged out. Response status [{}]. Response body was [{}]", responseStatus, responseBody);
+            success = (responseStatus == 200);
         } finally {
             setCookie(EMPTY);
         }
