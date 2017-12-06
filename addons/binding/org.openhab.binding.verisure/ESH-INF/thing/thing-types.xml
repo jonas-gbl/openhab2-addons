@@ -110,6 +110,27 @@
         </config-description>
     </thing-type>
 
+    <thing-type id="door-lock">
+        <supported-bridge-type-refs>
+            <bridge-type-ref id="verisure-alarm"/>
+        </supported-bridge-type-refs>
+
+        <label>Door Lock</label>
+        <description>A remote controlled door lock</description>
+
+        <channels>
+            <channel id="lock-unlock-channel" typeId="lock-unlock-channel"/>
+            <channel id="location-channel" typeId="location-channel"/>
+        </channels>
+
+        <config-description>
+            <parameter name="device-label" type="text" required="true">
+                <label>Device Label</label>
+                <description>The label of the device within a specific installation</description>
+            </parameter>
+        </config-description>
+    </thing-type>
+
 
     <channel-type id="alarm-status-channel">
         <item-type>String</item-type>
@@ -166,6 +187,18 @@
         <label>Status</label>
         <description>Status of the Smart Plug</description>
         <state readOnly="false"/>
+    </channel-type>
+
+    <channel-type id="lock-unlock-channel">
+        <item-type>String</item-type>
+        <label>Door Lock status</label>
+        <description>The status of the remotely controlled lock</description>
+        <state readOnly="false">
+            <options>
+                <option value="LOCKED">Locked</option>
+                <option value="UNLOCKED">Unlocked</option>
+            </options>
+        </state>
     </channel-type>
 
 </thing:thing-descriptions>

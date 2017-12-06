@@ -1,0 +1,129 @@
+{
+	"pendingChanges": 0,
+	"installationErrorList": [],
+	"doorWindow": {
+		"doorWindowDevice": [{
+				"reportTime": "2033-12-25T10:15:35.000Z",
+				"state": "CLOSE",
+				"deviceLabel": "ASDF 0001",
+				"wired": false,
+				"area": "Main Door"
+			},
+			{
+				"reportTime": "2033-12-25T10:15:35.000Z",
+				"state": "CLOSE",
+				"deviceLabel": "ASDF 0002",
+				"wired": false,
+				"area": "Basement Door"
+			},
+			{
+				"reportTime": "2033-12-25T10:15:35.000Z",
+				"state": "CLOSE",
+				"deviceLabel": "ASDF 0003",
+				"wired": false,
+				"area": "Rear Door"
+			}
+		],
+		"reportState": true
+	},
+	"userTracking": {
+		"installationStatus": "ACTIVE",
+		"users": [{
+				"status": "ACTIVE",
+				"currentLocationTimestamp": "2033-12-25T10:15:35.000Z",
+				"name": "John Doe",
+				"currentLocationId": "AWAY",
+				"webAccount": "someone@somewhere.net",
+				"deviceId": "d3v1c3-1d-1",
+				"isCallingUser": true
+			},
+			{
+				"status": "ACTIVE",
+				"currentLocationTimestamp": "2033-12-25T10:15:35.000Z",
+				"name": "Joanna Doe",
+				"currentLocationId": "AWAY",
+				"webAccount": "someone-else@somewhere.net",
+				"deviceId": "d3v1c3-1d-2",
+				"isCallingUser": false
+			}
+		],
+		"locations": [{
+			"locationName": "HOME",
+			"locationId": "5om3wh3r3-1d",
+			"isInstallationAddress": true
+		}]
+	},
+	"controlPlugs": [],
+	"batteryProcess": {
+		"active": false
+	},
+	"customerImageCameras": [],
+	"doorLockStatusList": [{
+		"eventTime": "2033-12-25T20:20:20.000Z",
+		"area": "Main Door",
+		"deviceLabel": "D00R L0CK",
+		"currentLockState": "LOCKED",
+		"motorJam": false,
+		"secureModeActive": false,
+		"paired": true,
+		"lockedState": "LOCKED",
+		"pendingLockState": "NONE",
+		"method": "ARMING"
+	}],
+	"heatPumps": [],
+	"accountPermissions": {
+		"accountPermissionsHash": "acc0un7-p3rm1s10n-h@$h"
+	},
+	"smartPlugs": [{
+			"isHazardous": false,
+			"area": "Kitchen",
+			"pendingState": "NONE",
+			"deviceLabel": "SMRT PLG1",
+			"currentState": "OFF",
+			"icon": "OTHER"
+		},
+		{
+			"isHazardous": false,
+			"area": "WC",
+			"pendingState": "NONE",
+			"deviceLabel": "SMRT PLG2",
+			"currentState": "OFF",
+			"icon": "OTHER"
+		}
+	],
+	"smartCameras": [],
+	"ethernetConnectedNow": true,
+	"ethernetModeActive": true,
+	"armstateCompatible": true,
+	"climateValues": [{
+			"temperature": 22.7,
+			"deviceLabel": "DEVI CE01",
+			"humidity": 63.0,
+			"deviceType": "TYPE1",
+			"time": "2033-12-25T10:15:35.000Z",
+			"deviceArea": "Living room"
+		},
+		{
+			"temperature": 23.5,
+			"deviceLabel": "DEVI CE02",
+			"humidity": 61.0,
+			"deviceType": "TYPE2",
+			"time": "2033-12-25T10:15:35.000Z",
+			"deviceArea": "Hallway"
+		}
+	],
+	"totalSmsCount": 0,
+	"armState": {
+		"date": "2033-12-25T10:15:35.000Z",
+		"statusType": "ARMED_AWAY",
+		"name": "Joanna Doe",
+		"changedVia": "TAG"
+	},
+	"latestEthernetStatus": {
+		"testDate": "2033-12-25T10:15:35.000Z",
+		"latestEthernetTestResult": true,
+		"protectedArea": "Living room",
+		"deviceLabel": "DEVI CE03"
+	},
+	"eventCounts": []
+}

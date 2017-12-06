@@ -1,0 +1,16 @@
+[
+  {
+    "giid": "112233445566",
+    "firmwareVersion": 12345,
+    "routingGroup": "SE",
+    "shard": 24,
+    "locale": "sv_SE",
+    "signalFilterId": 1,
+    "deleted": false,
+    "cid": "00123456",
+    "street": "Somewherevej 33",
+    "streetNo1": "",
+    "streetNo2": "",
+    "alias": "Somewherevej"
+  }
+]

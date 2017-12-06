@@ -8,10 +8,8 @@
  */
 package org.openhab.binding.verisure.internal;
 
-import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLEncoder;
 
 import com.google.common.base.Preconditions;
 import org.openhab.binding.verisure.LockStatus;
@@ -103,9 +101,9 @@ public class VerisureUrls {
         try {
             String path = basePath + "/installation/" + giid + "/device/" + deviceLabel
                     + "/" + (lockStatus == LockStatus.LOCKED ? "lock" : "unlock");
-            URLEncoder.encode(path, "UTF-8");
+            path = path.replace(" ", "%20");
             return new URL(protocol, host, port, path);
-        } catch (MalformedURLException | UnsupportedEncodingException e) {
+        } catch (MalformedURLException e) {
             throw new IllegalStateException("doorLock URL is misconfigured");
         }
     }

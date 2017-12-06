@@ -23,10 +23,7 @@ import org.eclipse.smarthome.core.thing.ThingUID;
 import org.openhab.binding.verisure.handler.AlarmBridgeHandler;
 import org.openhab.binding.verisure.handler.VerisureThingHandler;
 import org.openhab.binding.verisure.internal.InstallationOverviewReceivedListener;
-import org.openhab.binding.verisure.internal.json.ClimateValue;
-import org.openhab.binding.verisure.internal.json.DoorWindowDevice;
-import org.openhab.binding.verisure.internal.json.InstallationOverview;
-import org.openhab.binding.verisure.internal.json.SmartPlug;
+import org.openhab.binding.verisure.internal.json.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,6 +65,10 @@ public class VerisureSensorDiscoveryService extends AbstractDiscoveryService imp
         return SUPPORTED_THING_TYPES_UIDS;
     }
 
+    @Override
+    public void onInstallationOverviewReceived(InstallationOverview installationOverview) {
+        processInstallationOverview(installationOverview);
+    }
 
     @Override
     protected void startScan() {
@@ -82,6 +83,12 @@ public class VerisureSensorDiscoveryService extends AbstractDiscoveryService imp
             logger.debug("Failed to retrieve installation overview [{}]", reason);
         }
 
+    }
+
+    @Override
+    protected synchronized void stopScan() {
+        super.stopScan();
+        removeOlderResults(getTimestampOfLastScan());
     }
 
     private void processInstallationOverview(InstallationOverview installationOverview) {
@@ -143,17 +150,26 @@ public class VerisureSensorDiscoveryService extends AbstractDiscoveryService imp
 
             thingDiscovered(discoveryResult);
         }
-    }
+
+        List<DoorLock> doorLocks = installationOverview.getDoorLockStatusList();
+        for (DoorLock doorLock : doorLocks) {
+            String deviceLabel = doorLock.getDeviceLabel();
+            String deviceArea = doorLock.getArea();
+            String normalizedDeviceLabel = StringUtils.lowerCase(deviceLabel.replaceAll("[^a-zA-Z0-9_]", "_"));
+            ThingUID thingUID = new ThingUID(THING_TYPE_DOORLOCK, bridgeUID, normalizedDeviceLabel);
+
+            Map<String, Object> properties = new HashMap<>(1);
+            properties.put(VerisureThingHandler.DEVICE_LABEL_PARAM, deviceLabel);
+
+            DiscoveryResult discoveryResult = DiscoveryResultBuilder.create(thingUID)
+                    .withProperties(properties)
+                    .withBridge(bridgeUID)
+                    .withLabel("Door Lock " + deviceLabel + " (" + deviceArea + ")")
+                    .build();
+
+            thingDiscovered(discoveryResult);
 
 
-    @Override
-    protected synchronized void stopScan() {
-        super.stopScan();
-        removeOlderResults(getTimestampOfLastScan());
-    }
-
-    @Override
-    public void onInstallationOverviewReceived(InstallationOverview installationOverview) {
-        processInstallationOverview(installationOverview);
+        }
     }
 }

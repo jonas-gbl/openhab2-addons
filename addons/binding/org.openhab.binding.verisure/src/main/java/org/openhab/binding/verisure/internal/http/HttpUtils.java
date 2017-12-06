@@ -13,6 +13,9 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Map;
 
+import com.google.common.base.Preconditions;
+import org.apache.commons.lang.StringUtils;
+
 /**
  * The {@link HttpUtils} provides basic helper methods to perform HTTP actions. On error a  {@link IOException} is thrown.
  *
@@ -22,20 +25,13 @@ public class HttpUtils {
 
     public static HttpResponse put(URL url, Map<String, String> headers, String data) throws IOException {
 
+        Preconditions.checkArgument(url != null);
+        Preconditions.checkArgument(StringUtils.isEmpty(data) || contentTypeHeaderExists(headers));
+
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         connection.setRequestMethod("PUT");
 
-        if (headers != null) {
-            for (Map.Entry<String, String> entry : headers.entrySet()) {
-                connection.setRequestProperty(entry.getKey(), entry.getValue());
-            }
-        }
-
-        if (data != null && !data.isEmpty()) {
-            connection.setDoOutput(true);
-        }
-
-
+        writeHeaders(headers, connection);
         writeRequestData(data, connection);
 
         connection.disconnect();
@@ -44,28 +40,54 @@ public class HttpUtils {
 
     public static HttpResponse post(URL url, Map<String, String> headers, String data) throws IOException {
 
+        Preconditions.checkArgument(url != null);
+        Preconditions.checkArgument(StringUtils.isEmpty(data) || contentTypeHeaderExists(headers));
+
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         connection.setRequestMethod("POST");
 
-        if (headers != null) {
-            for (Map.Entry<String, String> entry : headers.entrySet()) {
-                connection.setRequestProperty(entry.getKey(), entry.getValue());
-            }
-        }
-
-        if (data != null && !data.isEmpty()) {
-            connection.setDoOutput(true);
-        }
-
-
+        writeHeaders(headers, connection);
         writeRequestData(data, connection);
 
         connection.disconnect();
         return retrieveResponse(connection);
     }
 
+    public static HttpResponse get(URL url, Map<String, String> headers) throws IOException {
+
+        Preconditions.checkArgument(url != null);
+
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        connection.setRequestMethod("GET");
+
+        writeHeaders(headers, connection);
+
+
+        connection.connect();
+        return retrieveResponse(connection);
+    }
+
+    public static HttpResponse delete(URL url, Map<String, String> headers) throws IOException {
+        Preconditions.checkArgument(url != null);
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        connection.setRequestMethod("DELETE");
+        writeHeaders(headers, connection);
+        return retrieveResponse(connection);
+    }
+
+    private static void writeHeaders(Map<String, String> headers, HttpURLConnection connection) {
+
+        if (headers != null) {
+            for (Map.Entry<String, String> entry : headers.entrySet()) {
+                connection.setRequestProperty(entry.getKey(), entry.getValue());
+            }
+        }
+    }
+
     private static void writeRequestData(String data, HttpURLConnection connection) throws IOException {
-        if (data != null && !data.isEmpty()) {
+
+        if (StringUtils.isNotBlank(data)) {
+            connection.setDoOutput(true);
             OutputStream out = null;
             try {
                 out = connection.getOutputStream();
@@ -77,36 +99,6 @@ public class HttpUtils {
                 }
             }
         }
-    }
-
-    public static HttpResponse get(URL url, Map<String, String> headers) throws IOException {
-
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        connection.setRequestMethod("GET");
-
-        if (headers != null) {
-            for (Map.Entry<String, String> entry : headers.entrySet()) {
-                connection.setRequestProperty(entry.getKey(), entry.getValue());
-            }
-        }
-
-
-        connection.connect();
-        return retrieveResponse(connection);
-    }
-
-    public static HttpResponse delete(URL url, Map<String, String> headers) throws IOException {
-
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        connection.setRequestMethod("DELETE");
-
-        if (headers != null) {
-            for (Map.Entry<String, String> entry : headers.entrySet()) {
-                connection.addRequestProperty(entry.getKey(), entry.getValue());
-            }
-        }
-
-        return retrieveResponse(connection);
     }
 
     private static HttpResponse retrieveResponse(HttpURLConnection connection) throws IOException {
@@ -144,4 +136,14 @@ public class HttpUtils {
         }
         return bos.toString();
     }
+
+    private static boolean contentTypeHeaderExists(Map<String, String> headers) {
+
+        return (headers != null)
+                && (headers.entrySet().stream()
+                .anyMatch(entry ->
+                                  entry.getKey().equalsIgnoreCase("Content-Type")
+                                          && StringUtils.isNotBlank(entry.getValue())));
+    }
+
 }

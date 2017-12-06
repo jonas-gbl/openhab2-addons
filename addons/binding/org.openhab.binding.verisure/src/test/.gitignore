@@ -1,0 +1,6 @@
+*.*
+!.gitignore
+!resources/__files/*
+!java/org/openhab/binding/verisure/internal/VerisureSessionTest.java
+!java/org/openhab/binding/verisure/internal/VerisureUrlsTest.java
+!java/org/openhab/binding/verisure/internal/HttpUtilsTest.java

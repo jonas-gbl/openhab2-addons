@@ -27,10 +27,7 @@ import org.eclipse.smarthome.core.thing.binding.BaseThingHandlerFactory;
 import org.eclipse.smarthome.core.thing.binding.ThingHandler;
 import org.eclipse.smarthome.core.thing.binding.ThingHandlerFactory;
 import org.openhab.binding.verisure.discovery.VerisureSensorDiscoveryService;
-import org.openhab.binding.verisure.handler.AlarmBridgeHandler;
-import org.openhab.binding.verisure.handler.ClimateSensorHandler;
-import org.openhab.binding.verisure.handler.DoorWindowSensorHandler;
-import org.openhab.binding.verisure.handler.SmartPlugHandler;
+import org.openhab.binding.verisure.handler.*;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.component.annotations.Component;
 
@@ -48,7 +45,8 @@ public class VerisureHandlerFactory extends BaseThingHandlerFactory {
             Sets.newHashSet(THING_TYPE_VERISURE_ALARM,
                             THING_TYPE_CLIMATE_SENSOR,
                             THING_TYPE_WINDOW_DOOR_SENSOR,
-                            THING_TYPE_SMARTPLUG);
+                            THING_TYPE_SMARTPLUG,
+                            THING_TYPE_DOORLOCK);
 
     private Map<ThingUID, ServiceRegistration<?>> discoveryServiceRegs = new HashMap<>();
 
@@ -71,16 +69,11 @@ public class VerisureHandlerFactory extends BaseThingHandlerFactory {
             return new DoorWindowSensorHandler(thing);
         } else if (thingTypeUID.equals(THING_TYPE_SMARTPLUG)) {
             return new SmartPlugHandler(thing);
+        } else if (thingTypeUID.equals(THING_TYPE_DOORLOCK)) {
+            return new DoorLockHandler(thing);
         }
 
         return null;
-    }
-
-    private synchronized void registerApplianceDiscoveryService(AlarmBridgeHandler bridgeHandler) {
-        VerisureSensorDiscoveryService discoveryService = new VerisureSensorDiscoveryService(bridgeHandler);
-        discoveryService.activate();
-        this.discoveryServiceRegs.put(bridgeHandler.getThing().getUID(), bundleContext
-                .registerService(DiscoveryService.class.getName(), discoveryService, new Hashtable<String, Object>()));
     }
 
     @Override
@@ -96,5 +89,12 @@ public class VerisureHandlerFactory extends BaseThingHandlerFactory {
                 discoveryServiceRegs.remove(thingHandler.getThing().getUID());
             }
         }
+    }
+
+    private synchronized void registerApplianceDiscoveryService(AlarmBridgeHandler bridgeHandler) {
+        VerisureSensorDiscoveryService discoveryService = new VerisureSensorDiscoveryService(bridgeHandler);
+        discoveryService.activate();
+        this.discoveryServiceRegs.put(bridgeHandler.getThing().getUID(), bundleContext
+                .registerService(DiscoveryService.class.getName(), discoveryService, new Hashtable<String, Object>()));
     }
 }

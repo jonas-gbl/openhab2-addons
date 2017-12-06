@@ -56,8 +56,8 @@ public class AlarmBridgeHandler extends BaseBridgeHandler {
     public static final String REFRESH_PARAM = "refresh";
     public static final String BASEURL_PARAM = "baseurl";
     public static final String PIN_PARAM = "pin";
-    private static final Pattern burstPattern = Pattern.compile("burst-([1-9][0-9]*)-([1-9][0-9]{2,})");
-    private static final Pattern setArmStatePattern = Pattern.compile("(DISARMED|ARMED_HOME|ARMED_AWAY)(?:_([0-9]{4}))?");
+    private static final Pattern BURST_PATTERN = Pattern.compile("burst-([1-9][0-9]*)-([1-9][0-9]{2,})");
+    private static final Pattern SET_ARM_STATE_PATTERN = Pattern.compile("(DISARMED|ARMED_HOME|ARMED_AWAY)(?:_([0-9]{4}))?");
 
     private final Logger logger = LoggerFactory.getLogger(AlarmBridgeHandler.class);
     private final CopyOnWriteArrayList<InstallationOverviewReceivedListener> installationOverviewReceivedListeners = new CopyOnWriteArrayList<>();
@@ -68,7 +68,6 @@ public class AlarmBridgeHandler extends BaseBridgeHandler {
     private String username;
     private String password;
     private String pin;
-    private boolean allowStateUpdate = false;
     private BigDecimal refresh;
 
     private VerisureSession verisureSession;
@@ -86,6 +85,10 @@ public class AlarmBridgeHandler extends BaseBridgeHandler {
 
     public String getGiid() {
         return giid;
+    }
+
+    public String getPin() {
+        return pin;
     }
 
     @Override
@@ -106,11 +109,10 @@ public class AlarmBridgeHandler extends BaseBridgeHandler {
             Preconditions.checkState(StringUtils.isNotEmpty(giid), "GIID misconfigured");
             Preconditions.checkState(StringUtils.isNotEmpty(username), "Username is empty");
             Preconditions.checkState(StringUtils.isNotEmpty(password), "Password is empty");
+            Preconditions.checkState(StringUtils.isNotEmpty(pin), "PIN is empty");
             Preconditions.checkState(Objects.nonNull(refresh), "Refresh is null");
             Preconditions.checkState(refresh.intValue() > 0, "Refresh is not positive");
 
-
-            allowStateUpdate = StringUtils.isNotBlank(pin);
             VerisureUrls verisureUrls = VerisureUrls.withBaseUrl(baseUrl);
 
 
@@ -126,61 +128,46 @@ public class AlarmBridgeHandler extends BaseBridgeHandler {
 
         logger.debug("Received command [{}] of type [{}]", command, command.getClass().getCanonicalName());
 
-        if (isArmStateCommand(channelUID, command)) {
+        if (isArmCommand(channelUID, command)) {
+            String receivedPin = null;
+            ArmStatus requestedState = null;
 
             String payload = command.toFullString();
-            Matcher burstMatcher = setArmStatePattern.matcher(payload);
-            if (burstMatcher.matches()) {
-                ArmStatus requestedState = ArmStatus.retrieveById(burstMatcher.group(1));
-                String receivedPin = burstMatcher.group(2);
+            Matcher armStateMatcher = SET_ARM_STATE_PATTERN.matcher(payload);
+
+            if (command instanceof StringType && armStateMatcher.matches()) {
+                requestedState = ArmStatus.retrieveById(armStateMatcher.group(1));
+                receivedPin = armStateMatcher.group(2);
                 receivedPin = receivedPin != null ? receivedPin : this.pin;
                 this.setArmState(requestedState, receivedPin);
+            } else if (command instanceof ArmCommand) {
+                ArmCommand receivedCommand = (ArmCommand) command;
+                requestedState = receivedCommand.getStatus();
             }
+
+            receivedPin = receivedPin != null ? receivedPin : this.pin;
+            this.setArmState(requestedState, receivedPin);
 
             logger.debug("Scheduling one time update after receiving update command [{}]", command);
             scheduler.schedule(this::updateAlarmArmState, 1, TimeUnit.SECONDS);
         } else if (command instanceof RefreshType) {
             logger.debug("Scheduling one time update after receiving refresh command [{}]", command);
             scheduler.schedule(this::updateAlarmArmState, 1, TimeUnit.SECONDS);
-        } else if (command instanceof ArmCommand) {
-            ArmCommand receivedCommand = (ArmCommand) command;
-
-            ArmStatus status = receivedCommand.getStatus();
-
-            String receivedCommandUsername = receivedCommand.getUsername();
-            receivedCommandUsername = receivedCommandUsername == null ? this.username : receivedCommandUsername;
-
-            String receivedCommandPassword = receivedCommand.getPassword();
-            receivedCommandPassword = receivedCommandPassword == null ? this.password : receivedCommandPassword;
-
-            String receivedCommandPin = receivedCommand.getPin();
-            receivedCommandPin = receivedCommandPin == null ? this.pin : receivedCommandPin;
-
-
-            try {
-                VerisureSession armSession = new VerisureSession(VerisureUrls.withBaseUrl(baseUrl),
-                                                                 receivedCommandUsername, receivedCommandPassword);
-                armSession.login();
-                armSession.setArmState(this.giid, receivedCommandPin, status);
-                armSession.logout();
-            } catch (IOException e) {
-                logger.debug("Failed to update arm state for command [{}]", receivedCommand);
-            }
-            logger.debug("Scheduling one time update after receiving update command [{}]", command);
-            scheduler.schedule(this::updateAlarmArmState, 1, TimeUnit.SECONDS);
-        } else if (command instanceof BurstCommand) {
-            BurstCommand receivedCommand = (BurstCommand) command;
-            this.activateBurstMode(receivedCommand);
         } else if (isBurstCommand(channelUID, command)) {
             String payload = command.toFullString();
-            Matcher burstMatcher = burstPattern.matcher(payload);
+            Matcher burstMatcher = BURST_PATTERN.matcher(payload);
+
+            BurstCommand burstCommand = new BurstCommand(1, 1000);
             if (burstMatcher.matches()) {
                 long count = Long.parseLong(burstMatcher.group(1));
                 long intervalInMilliseconds = Long.parseLong(burstMatcher.group(2));
+                burstCommand = new BurstCommand(count, intervalInMilliseconds);
 
-                BurstCommand burstCommand = new BurstCommand(count, intervalInMilliseconds);
-                this.activateBurstMode(burstCommand);
+            } else if (command instanceof BurstCommand) {
+                burstCommand = (BurstCommand) command;
             }
+
+            this.activateBurstMode(burstCommand);
         }
     }
 
@@ -250,10 +237,10 @@ public class AlarmBridgeHandler extends BaseBridgeHandler {
     private synchronized void setArmState(ArmStatus requestedState, String pin) {
         try {
             if (verisureSession.isLoggedIn() || verisureSession.login()) {
-                ArmStatus updatedState = verisureSession.setArmState(giid, pin, requestedState);
+                verisureSession.setArmState(giid, pin, requestedState);
                 updateStatus(ThingStatus.ONLINE);
                 ChannelUID channelUID = new ChannelUID(getThing().getUID(), ALARM_STATUS_CHANNEL);
-                StringType state = new StringType(updatedState.id);
+                StringType state = new StringType(requestedState.id);
                 updateState(channelUID, state);
             }
         } catch (IOException ioe) {
@@ -289,14 +276,16 @@ public class AlarmBridgeHandler extends BaseBridgeHandler {
     }
 
 
-    private boolean isArmStateCommand(ChannelUID channelUID, Command command) {
+    private boolean isArmCommand(ChannelUID channelUID, Command command) {
 
         boolean result = false;
         if (command instanceof StringType) {
             String payload = command.toFullString();
 
-            Matcher burstMatcher = setArmStatePattern.matcher(payload);
+            Matcher burstMatcher = SET_ARM_STATE_PATTERN.matcher(payload);
             result = burstMatcher.matches();
+        } else if (command instanceof ArmCommand) {
+            result = true;
         }
 
         result &= channelUID.getId().equals(ALARM_STATUS_CHANNEL);
@@ -310,8 +299,10 @@ public class AlarmBridgeHandler extends BaseBridgeHandler {
         if (command instanceof StringType) {
             String payload = command.toFullString();
 
-            Matcher burstMatcher = burstPattern.matcher(payload);
+            Matcher burstMatcher = BURST_PATTERN.matcher(payload);
             result = burstMatcher.matches();
+        } else if (command instanceof BurstCommand) {
+            result = true;
         }
 
         result &= channelUID.getId().equals(ALARM_STATUS_CHANNEL);

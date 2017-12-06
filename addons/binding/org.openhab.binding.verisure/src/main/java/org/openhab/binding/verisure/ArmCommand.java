@@ -18,8 +18,6 @@ import org.eclipse.smarthome.core.types.Command;
  */
 public class ArmCommand implements Command {
 
-    private String username;
-    private String password;
     private String pin;
     private ArmStatus status;
 
@@ -33,18 +31,8 @@ public class ArmCommand implements Command {
     }
 
     public ArmCommand(String username, String password, String pin, ArmStatus status) {
-        this.username = username;
-        this.password = password;
         this.pin = pin;
         this.status = status;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public String getPassword() {
-        return password;
     }
 
     public String getPin() {
@@ -53,26 +41,6 @@ public class ArmCommand implements Command {
 
     public ArmStatus getStatus() {
         return status;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof ArmCommand)) {
-            return false;
-        }
-        ArmCommand that = (ArmCommand) o;
-        return java.util.Objects.equals(username, that.username) &&
-                java.util.Objects.equals(password, that.password) &&
-                java.util.Objects.equals(pin, that.pin) &&
-                status == that.status;
-    }
-
-    @Override
-    public int hashCode() {
-        return java.util.Objects.hash(username, password, pin, status);
     }
 
     @Override
@@ -88,8 +56,25 @@ public class ArmCommand implements Command {
     @Override
     public String toString() {
         return Objects.toStringHelper(this)
-                .add("username", username)
                 .add("status", status)
                 .toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof ArmCommand)) {
+            return false;
+        }
+        ArmCommand that = (ArmCommand) o;
+        return java.util.Objects.equals(pin, that.pin)
+                && status == that.status;
+    }
+
+    @Override
+    public int hashCode() {
+        return java.util.Objects.hash(pin, status);
     }
 }
