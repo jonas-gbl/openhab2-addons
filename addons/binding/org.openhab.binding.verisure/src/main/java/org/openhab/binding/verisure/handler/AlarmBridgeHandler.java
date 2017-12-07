@@ -57,7 +57,7 @@ public class AlarmBridgeHandler extends BaseBridgeHandler {
     public static final String BASEURL_PARAM = "baseurl";
     public static final String PIN_PARAM = "pin";
     private static final Pattern BURST_PATTERN = Pattern.compile("burst-([1-9][0-9]*)-([1-9][0-9]{2,})");
-    private static final Pattern SET_ARM_STATE_PATTERN = Pattern.compile("(DISARMED|ARMED_HOME|ARMED_AWAY)(?:_([0-9]{4}))?");
+    private static final Pattern SET_ARM_STATE_PATTERN = Pattern.compile("(DISARMED|ARMED_HOME|ARMED_AWAY)(?:_([0-9]{4,}))?");
 
     private final Logger logger = LoggerFactory.getLogger(AlarmBridgeHandler.class);
     private final CopyOnWriteArrayList<InstallationOverviewReceivedListener> installationOverviewReceivedListeners = new CopyOnWriteArrayList<>();
@@ -138,11 +138,10 @@ public class AlarmBridgeHandler extends BaseBridgeHandler {
             if (command instanceof StringType && armStateMatcher.matches()) {
                 requestedState = ArmStatus.retrieveById(armStateMatcher.group(1));
                 receivedPin = armStateMatcher.group(2);
-                receivedPin = receivedPin != null ? receivedPin : this.pin;
-                this.setArmState(requestedState, receivedPin);
             } else if (command instanceof ArmCommand) {
                 ArmCommand receivedCommand = (ArmCommand) command;
                 requestedState = receivedCommand.getStatus();
+                receivedPin = receivedCommand.getPin();
             }
 
             receivedPin = receivedPin != null ? receivedPin : this.pin;

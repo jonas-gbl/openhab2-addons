@@ -50,19 +50,19 @@ public class SmartPlugHandler extends VerisureThingHandler {
 
         if (channelUID.getId().equals(ON_OFF_CHANNEL) && command instanceof OnOffType) {
             OnOffType receivedCommand = (OnOffType) command;
-            if (getBridge() != null) {
-                AlarmBridgeHandler alarmBridgeHandler = (AlarmBridgeHandler) getBridge().getHandler();
-                VerisureSession verisureSession = alarmBridgeHandler.getVerisureSession();
-                try {
-                    verisureSession.setSmartPlug(alarmBridgeHandler.getGiid(), deviceLabel, receivedCommand == OnOffType.ON);
-                } catch (IOException ioe) {
-                    updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.OFFLINE.COMMUNICATION_ERROR);
-                }
 
-                logger.debug("Scheduling one time update after receiving command of type [{}] and  content [{}]",
-                             command.getClass().getCanonicalName(), command);
-                scheduler.schedule(alarmBridgeHandler::updateAlarmArmState, 1, TimeUnit.SECONDS);
+            AlarmBridgeHandler alarmBridgeHandler = (AlarmBridgeHandler) getBridge().getHandler();
+            VerisureSession verisureSession = alarmBridgeHandler.getVerisureSession();
+            try {
+                verisureSession.setSmartPlug(alarmBridgeHandler.getGiid(), deviceLabel, receivedCommand == OnOffType.ON);
+            } catch (IOException ioe) {
+                updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.OFFLINE.COMMUNICATION_ERROR);
             }
+
+            logger.debug("Scheduling one time update after receiving command of type [{}] and  content [{}]",
+                         command.getClass().getCanonicalName(), command);
+            scheduler.schedule(alarmBridgeHandler::updateAlarmArmState, 1, TimeUnit.SECONDS);
+
         }
     }
 

@@ -38,7 +38,7 @@ import org.slf4j.LoggerFactory;
  * @author Jonas Gabriel - Initial contribution
  */
 public class DoorLockHandler extends VerisureThingHandler {
-    private static final Pattern SET_LOCK_STATE_PATTERN = Pattern.compile("(LOCKED|UNLOCKED)(?:_([0-9]{4}))?");
+    private static final Pattern SET_LOCK_STATE_PATTERN = Pattern.compile("(LOCKED|UNLOCKED)(?:_([0-9]{4,}))?");
     private final Logger logger = LoggerFactory.getLogger(DoorLockHandler.class);
 
     public DoorLockHandler(Thing thing) {
@@ -55,22 +55,18 @@ public class DoorLockHandler extends VerisureThingHandler {
                 LockStatus requestedStatus = LockStatus.retrieveById(lockStateMatcher.group(1));
                 String receivedPin = lockStateMatcher.group(2);
 
-                if (getBridge() != null) {
-                    AlarmBridgeHandler alarmBridgeHandler = (AlarmBridgeHandler) getBridge().getHandler();
-                    VerisureSession verisureSession = alarmBridgeHandler.getVerisureSession();
-                    try {
-                        receivedPin = receivedPin != null ? receivedPin : alarmBridgeHandler.getPin();
-                        verisureSession.setDoorLock(alarmBridgeHandler.getGiid(), deviceLabel, receivedPin, requestedStatus);
-                    } catch (IOException ioe) {
-                        updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.OFFLINE.COMMUNICATION_ERROR);
-                    }
-
-                    logger.debug("Scheduling one time update after receiving command of type [{}] and  content [{}]",
-                                 command.getClass().getCanonicalName(), command);
-                    scheduler.schedule(alarmBridgeHandler::updateAlarmArmState, 1, TimeUnit.SECONDS);
+                AlarmBridgeHandler alarmBridgeHandler = (AlarmBridgeHandler) getBridge().getHandler();
+                VerisureSession verisureSession = alarmBridgeHandler.getVerisureSession();
+                try {
+                    receivedPin = receivedPin != null ? receivedPin : alarmBridgeHandler.getPin();
+                    verisureSession.setDoorLock(alarmBridgeHandler.getGiid(), deviceLabel, receivedPin, requestedStatus);
+                } catch (IOException ioe) {
+                    updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.OFFLINE.COMMUNICATION_ERROR);
                 }
 
-
+                logger.debug("Scheduling one time update after receiving command of type [{}] and  content [{}]",
+                             command.getClass().getCanonicalName(), command);
+                scheduler.schedule(alarmBridgeHandler::updateAlarmArmState, 3, TimeUnit.SECONDS);
             }
 
 
