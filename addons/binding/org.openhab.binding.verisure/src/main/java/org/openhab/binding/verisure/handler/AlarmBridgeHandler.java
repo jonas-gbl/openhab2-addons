@@ -84,6 +84,13 @@ public class AlarmBridgeHandler extends BaseBridgeHandler {
     }
 
     public String getGiid() {
+
+        if (giid == null) {
+            Bridge alarmBridge = getThing();
+            Configuration configuration = alarmBridge.getConfiguration();
+            giid = (String) configuration.get(GIID_PARAM);
+        }
+
         return giid;
     }
 

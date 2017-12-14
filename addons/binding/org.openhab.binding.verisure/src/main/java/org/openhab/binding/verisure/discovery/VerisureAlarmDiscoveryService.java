@@ -103,6 +103,7 @@ public class VerisureAlarmDiscoveryService extends AbstractDiscoveryService {
                 properties.put(GIID_PARAM, giid);
                 properties.put(USERNAME_PARAM, username);
                 properties.put(PASSWORD_PARAM, password);
+                properties.put(BASEURL_PARAM, baseUrl);
 
                 BigDecimal refreshValue;
                 try {
